@@ -92,6 +92,51 @@ const HOVER_CSS = `
 /* Type filter chip hover */
 .type-chip:hover { border-color: var(--border-hover) !important; }
 .type-chip.active:hover { border-color: var(--brand-border) !important; }
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -400% 0; }
+  100% { background-position: 400% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface) 25%, #E8E6E1 50%, var(--surface) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: var(--r-sm);
+}
+
+/* Toast */
+.toast-wrap {
+  position: fixed; bottom: 28px; right: 28px;
+  z-index: 200; pointer-events: none;
+}
+.toast {
+  background: var(--fg); color: #FFFFFF;
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 8px 28px -6px #27252044, 0 2px 8px -2px #2725201A;
+  min-width: 280px; max-width: 400px;
+  pointer-events: auto;
+  transform: translateY(16px); opacity: 0;
+  transition: transform 300ms cubic-bezier(.2,.8,.2,1), opacity 220ms;
+}
+.toast.visible { transform: translateY(0); opacity: 1; }
+.toast-name { font-size: 13px; font-weight: 500; flex: 1; line-height: 1.4; }
+.toast-link {
+  font-size: 12px; font-weight: 500; white-space: nowrap;
+  color: var(--brand-bg); background: transparent; border: none;
+  cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 3px;
+  transition: color 120ms;
+}
+.toast-link:hover { color: #FFFFFF; }
+.toast-close {
+  width: 22px; height: 22px; border-radius: 4px;
+  background: #FFFFFF18; border: none; cursor: pointer;
+  display: grid; place-items: center; color: #FFFFFF99;
+  transition: background 120ms, color 120ms; flex-shrink: 0;
+}
+.toast-close:hover { background: #FFFFFF30; color: #FFFFFF; }
 `;
 
 (function injectHoverCss() {
@@ -102,6 +147,66 @@ const HOVER_CSS = `
     document.head.appendChild(s);
   }
 })();
+
+// ---------------------------------------------------------------------------
+// Toast notification — shown when an item is added to the personal library.
+// ---------------------------------------------------------------------------
+
+function ToastNotification({ toast, onNavigateLibrary }) {
+  const [visible, setVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!toast) { setVisible(false); return; }
+    const show = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(show);
+  }, [toast]);
+
+  if (!toast) return null;
+
+  return (
+    <div className="toast-wrap">
+      <div className={`toast${visible ? " visible" : ""}`}>
+        <span className="toast-name">
+          <span style={{ opacity: 0.7, fontWeight: 400 }}>Added to your library: </span>
+          {toast.name}
+        </span>
+        <button className="toast-link" onClick={onNavigateLibrary}>
+          Take me there
+        </button>
+        <button className="toast-close" onClick={toast.onDismiss} aria-label="Dismiss">
+          <Ic.close size={11} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton rows — shown briefly while Browse All "loads".
+// ---------------------------------------------------------------------------
+
+function SkeletonRows({ count = 8 }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "12px 14px",
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--r-md)",
+        }}>
+          <div className="skeleton" style={{ width: 40, height: 40, borderRadius: "var(--r-md)", flexShrink: 0 }} />
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="skeleton" style={{ height: 13, width: `${45 + (i * 13) % 30}%` }} />
+            <div className="skeleton" style={{ height: 10, width: `${25 + (i * 7) % 20}%` }} />
+          </div>
+          <div className="skeleton" style={{ height: 28, width: 110, borderRadius: "var(--r-sm)", flexShrink: 0 }} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Common style fragments used by buttons (className handles hover state).
@@ -592,33 +697,22 @@ function ContentLibraryPage({ ownItems, addedOrgItems, onNavigateOrg, justChange
 
 const orgPageStyles = {
   contextStrip: {
-    background: "linear-gradient(0deg, var(--brand-bg) 0%, #EAFCB5 100%)",
-    border: "1px solid var(--brand-border)",
-    borderRadius: "var(--r-lg)",
-    padding: "14px 18px",
-    display: "flex", alignItems: "center", gap: 14,
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--r-md)",
+    padding: "10px 14px",
+    display: "flex", alignItems: "center", gap: 10,
     marginBottom: 24,
   },
   contextIcon: {
-    width: 38, height: 38, borderRadius: "var(--r-md)",
-    background: "#FFFFFF99",
-    border: "1px solid var(--brand-border)",
     display: "grid", placeItems: "center",
-    color: "var(--brand-text)",
+    color: "var(--muted)",
     flexShrink: 0,
   },
-  contextText: { flex: 1, color: "var(--brand-text)" },
-  contextTitle: { fontSize: 14, fontWeight: 500 },
-  contextSub: { fontSize: 12, opacity: 0.85, marginTop: 2 },
-  countPill: {
-    display: "inline-flex", alignItems: "center", gap: 6,
-    background: "#FFFFFFCC", border: "1px solid var(--brand-border)",
-    borderRadius: 999,
-    padding: "4px 10px",
-    fontSize: 12, fontWeight: 500,
-    color: "var(--brand-text)",
-    whiteSpace: "nowrap",
-  },
+  contextText: { flex: 1, color: "var(--muted)" },
+  contextTitle: { fontSize: 12.5, fontWeight: 400 },
+  contextSub: null,
+  countPill: null,
   sectionGap: { marginBottom: 32 },
   docsHeader: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -639,6 +733,7 @@ const orgPageStyles = {
 
 function OrgLibraryPage({ videos, docs, schemes, addedIds, onBack, onAdd, onPreview, justChangedId, onViewAll }) {
   const total = videos.length + schemes.length + docs.length;
+  const [stripVisible, setStripVisible] = React.useState(true);
 
   return (
     <div>
@@ -656,20 +751,30 @@ function OrgLibraryPage({ videos, docs, schemes, addedIds, onBack, onAdd, onPrev
         </div>
       </div>
 
-      <div style={orgPageStyles.contextStrip}>
-        <div style={orgPageStyles.contextIcon}>
-          <Ic.building size={18} />
-        </div>
-        <div style={orgPageStyles.contextText}>
-          <div style={orgPageStyles.contextTitle}>Browsing {ORG.name}'s shared library</div>
-          <div style={orgPageStyles.contextSub}>
-            All content here is published by your organization and is read-only.
+      {stripVisible && (
+        <div style={orgPageStyles.contextStrip}>
+          <div style={orgPageStyles.contextIcon}>
+            <Ic.building size={14} />
           </div>
+          <div style={orgPageStyles.contextText}>
+            <span style={orgPageStyles.contextTitle}>
+              Browsing {ORG.name}'s shared library · {total} approved items · All content is read-only
+            </span>
+          </div>
+          <button
+            onClick={() => setStripVisible(false)}
+            style={{
+              background: "transparent", border: "none", cursor: "pointer",
+              color: "var(--muted)", display: "grid", placeItems: "center",
+              padding: 4, borderRadius: "var(--r-sm)", flexShrink: 0,
+              transition: "color 120ms",
+            }}
+            aria-label="Dismiss"
+          >
+            <Ic.close size={12} />
+          </button>
         </div>
-        <div style={orgPageStyles.countPill}>
-          <Ic.check size={11} /> {total} approved item{total === 1 ? "" : "s"}
-        </div>
-      </div>
+      )}
 
       {videos.length > 0 && (
         <div style={orgPageStyles.sectionGap}>
@@ -868,16 +973,23 @@ function TagChip({ tag, active, onClick }) {
   );
 }
 
-function BrowseAllPage({ videos, schemes, docs, addedIds, onBack, onAdd, onPreview, justChangedId, defaultType }) {
+function BrowseAllPage({ videos, schemes, docs, addedIds, onBack, onNavigateLibrary, onAdd, onPreview, justChangedId, defaultType }) {
   const [search, setSearch] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState(defaultType || "all");
   const [tagFilter, setTagFilter] = React.useState("all");
-  const [sort, setSort] = React.useState("recent");
+  const [loading, setLoading] = React.useState(true);
+
+  // Scroll to top + brief skeleton on every mount
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    const t = setTimeout(() => setLoading(false), 420);
+    return () => clearTimeout(t);
+  }, []);
 
   const all = [...videos, ...schemes, ...docs];
 
   const filtered = React.useMemo(() => {
-    let result = all.filter((item) => {
+    return all.filter((item) => {
       if (typeFilter !== "all" && item.kind !== typeFilter) return false;
       if (tagFilter !== "all" && item.tag !== tagFilter) return false;
       if (search.trim()) {
@@ -889,11 +1001,7 @@ function BrowseAllPage({ videos, schemes, docs, addedIds, onBack, onAdd, onPrevi
       }
       return true;
     });
-    if (sort === "az") {
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-    }
-    return result;
-  }, [all, typeFilter, tagFilter, search, sort]);
+  }, [all, typeFilter, tagFilter, search]);
 
   const counts = {
     all: all.length,
@@ -909,13 +1017,33 @@ function BrowseAllPage({ videos, schemes, docs, addedIds, onBack, onAdd, onPrevi
     { id: "doc", label: "Documents" },
   ];
 
+  // Breadcrumb separator
+  const sep = <span style={{ color: "var(--border-hover)", fontSize: 12, margin: "0 2px" }}>/</span>;
+
   return (
     <div>
-      <button className="btn-ghost-h" style={olStyles.breadcrumb} onClick={onBack}>
-        <Ic.arrowLeft size={13} /> Org Library
-      </button>
+      {/* Two-level breadcrumb: Content Library / Org Library / Browse All */}
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 16 }}>
+        <button
+          className="btn-ghost-h"
+          style={{ ...olStyles.breadcrumb, marginBottom: 0 }}
+          onClick={onNavigateLibrary}
+        >
+          Content Library
+        </button>
+        {sep}
+        <button
+          className="btn-ghost-h"
+          style={{ ...olStyles.breadcrumb, marginBottom: 0 }}
+          onClick={onBack}
+        >
+          Org Library
+        </button>
+        {sep}
+        <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500 }}>Browse All</span>
+      </div>
 
-      <div style={{ ...clStyles.header, marginTop: 4, marginBottom: 20 }}>
+      <div style={{ ...clStyles.header, marginBottom: 20 }}>
         <div>
           <div style={clStyles.title}>Browse All</div>
           <div style={clStyles.sub}>
@@ -924,8 +1052,8 @@ function BrowseAllPage({ videos, schemes, docs, addedIds, onBack, onAdd, onPrevi
         </div>
       </div>
 
-      {/* Search + type filter + sort */}
-      <div style={browseStyles.filterBar}>
+      {/* Search + type filter */}
+      <div style={{ ...browseStyles.filterBar, alignItems: "flex-start" }}>
         <div style={browseStyles.searchWrap}>
           <div style={browseStyles.searchIcon}>
             <Ic.search size={14} />
@@ -952,11 +1080,6 @@ function BrowseAllPage({ videos, schemes, docs, addedIds, onBack, onAdd, onPrevi
             />
           ))}
         </div>
-
-        <div style={browseStyles.sortRow}>
-          <SortBtn id="recent" label="Recent" active={sort === "recent"} onClick={() => setSort("recent")} />
-          <SortBtn id="az" label="A–Z" active={sort === "az"} onClick={() => setSort("az")} />
-        </div>
       </div>
 
       {/* Results count + topic tags */}
@@ -977,16 +1100,16 @@ function BrowseAllPage({ videos, schemes, docs, addedIds, onBack, onAdd, onPrevi
         </div>
       </div>
 
-      {/* Results list */}
-      {filtered.length === 0 ? (
+      {/* Skeleton or results */}
+      {loading ? (
+        <SkeletonRows count={10} />
+      ) : filtered.length === 0 ? (
         <div style={clStyles.empty}>
           <div style={{ display: "grid", placeItems: "center", marginBottom: 12, color: "var(--border-hover)" }}>
             <Ic.inbox size={36} />
           </div>
           <div style={clStyles.emptyTitle}>No results</div>
-          <div style={{ fontSize: 13 }}>
-            Try a different search or clear the filters.
-          </div>
+          <div style={{ fontSize: 13 }}>Try a different search or clear the filters.</div>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1018,9 +1141,16 @@ function App() {
   const [ownItems] = React.useState(COACH_OWN_ITEMS);
   const [previewId, setPreviewId] = React.useState(null);
   const [browseAllDefaultType, setBrowseAllDefaultType] = React.useState("all");
+  const [toast, setToast] = React.useState(null);
+  const toastTimerRef = React.useRef(null);
 
   const addedOrgItems = ALL_ORG_CONTENT.filter((i) => addedIds.includes(i.id));
   const previewItem = previewId ? findOrgItem(previewId) : null;
+
+  function dismissToast() {
+    clearTimeout(toastTimerRef.current);
+    setToast(null);
+  }
 
   function flashChange(id) {
     setJustChangedId(id);
@@ -1028,8 +1158,14 @@ function App() {
   }
   function handleAdd(id) {
     if (!addedIds.includes(id)) {
-      setAddedIds([...addedIds, id]);
+      setAddedIds((prev) => [...prev, id]);
       flashChange(id);
+      const item = findOrgItem(id);
+      if (item) {
+        clearTimeout(toastTimerRef.current);
+        setToast({ name: item.name, onDismiss: dismissToast });
+        toastTimerRef.current = setTimeout(dismissToast, 5000);
+      }
     }
   }
   function handleRemove(id) {
@@ -1079,6 +1215,7 @@ function App() {
             schemes={ORG_SCHEMES}
             addedIds={addedIds}
             onBack={() => setRoute("org-library")}
+            onNavigateLibrary={() => setRoute("library")}
             onAdd={handleAdd}
             onPreview={handlePreview}
             justChangedId={justChangedId}
@@ -1092,6 +1229,11 @@ function App() {
         isAdded={previewItem ? addedIds.includes(previewItem.id) : false}
         onClose={() => setPreviewId(null)}
         onAdd={(id) => { handleAdd(id); }}
+      />
+
+      <ToastNotification
+        toast={toast}
+        onNavigateLibrary={() => { setRoute("library"); dismissToast(); }}
       />
     </React.Fragment>
   );
