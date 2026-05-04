@@ -1,15 +1,15 @@
-// App entry — handles routing between Content Library + Org Library,
-// add/remove state, preview panel, and renders content affordances.
+// App entry — handles routing between Content Library, Org Library, and Browse All.
+// add/remove state, preview panel, and renders all content affordances.
 
 const { Ic, Shell, StatCard, Tabs, clStyles, olStyles, FieldDiagram, PreviewPanel } = window;
-const { ORG, COACH_OWN_ITEMS, ORG_ITEMS, ORG_SCHEMES, PRE_ADDED_ORG_IDS } = window.SEED;
+const { ORG, COACH_OWN_ITEMS, ORG_VIDEOS, ORG_DOCS, ORG_SCHEMES, PRE_ADDED_ORG_IDS, TAGS } = window.SEED;
 
 // Combined list of all org-library content (videos, docs, schemes).
-const ALL_ORG_CONTENT = [...ORG_ITEMS, ...ORG_SCHEMES];
+const ALL_ORG_CONTENT = [...ORG_VIDEOS, ...ORG_DOCS, ...ORG_SCHEMES];
 function findOrgItem(id) { return ALL_ORG_CONTENT.find((i) => i.id === id); }
 
 // ---------------------------------------------------------------------------
-// CSS — hover states, transitions, button hover.
+// CSS — hover states, transitions, button hover, browse all page.
 // ---------------------------------------------------------------------------
 
 const HOVER_CSS = `
@@ -85,6 +85,13 @@ const HOVER_CSS = `
 
 .btn-ghost-h { transition: background 120ms, color 120ms, border-color 120ms; }
 .btn-ghost-h:hover { background: var(--surface); color: var(--fg); border-color: var(--border-hover); }
+
+/* Browse All search input */
+.browse-search:focus { outline: none; border-color: var(--border-hover); box-shadow: 0 0 0 3px rgba(110,157,16,0.1); }
+
+/* Type filter chip hover */
+.type-chip:hover { border-color: var(--border-hover) !important; }
+.type-chip.active:hover { border-color: var(--brand-border) !important; }
 `;
 
 (function injectHoverCss() {
@@ -119,7 +126,7 @@ const orgBadgeStyle = {
 };
 
 // ---------------------------------------------------------------------------
-// Row component — used for documents.
+// Row component — used for documents and Browse All list items.
 //   mode: "own" | "org-source" | "org-added"
 // ---------------------------------------------------------------------------
 
@@ -156,7 +163,7 @@ const rowStyles = {
 function buildMeta(item, mode) {
   const kind = item.kind === "video" ? "Video" : item.kind === "scheme" ? "Scheme" : "Document";
   const dur = item.duration ? ` · ${item.duration}` : "";
-  if (mode === "org-source") return `${kind}${dur} · Added to org ${item.addedToOrg}`;
+  if (mode === "org-source") return `${kind}${dur} · Added ${item.addedToOrg}`;
   if (mode === "org-added")  return `${kind}${dur} · From org library · Not yet published`;
   return item.meta;
 }
@@ -164,8 +171,8 @@ function buildMeta(item, mode) {
 function ContentRow({ item, mode, isAdded, justChanged, onAdd, onRemove, onPreview }) {
   const isVideo  = item.kind === "video";
   const isScheme = item.kind === "scheme";
-  // In the org library, drop per-row org badges (the page-level context strip
-  // makes it clear). In the personal library, always show the badge.
+  // Show org badge in the personal library where provenance matters.
+  // In the org library itself (org-source) the context strip makes it clear.
   const showOrgBadge = mode === "org-added";
 
   let restAction = null;
@@ -257,7 +264,7 @@ function ContentRow({ item, mode, isAdded, justChanged, onAdd, onRemove, onPrevi
 }
 
 // ---------------------------------------------------------------------------
-// Video card — hero treatment with thumbnail placeholder + duration chip.
+// Video / Scheme card — hero treatment with thumbnail + duration chip.
 // ---------------------------------------------------------------------------
 
 const videoStyles = {
@@ -307,7 +314,7 @@ function MediaCard({ item, isAdded, justChanged, onAdd, onPreview, mediaSlot }) 
       <div style={videoStyles.body}>
         <div style={videoStyles.title}>{item.name}</div>
         <div style={videoStyles.desc}>{item.description}</div>
-        <div style={videoStyles.metaRow}>Added to org {item.addedToOrg}</div>
+        <div style={videoStyles.metaRow}>Added {item.addedToOrg}</div>
         <div style={videoStyles.actionRow}>
           {isAdded ? (
             <button className="btn-added" style={{ ...btnBase, ...videoStyles.fullBtn }}
@@ -353,7 +360,7 @@ function SchemeCard(props) {
 }
 
 // ---------------------------------------------------------------------------
-// Carousel
+// Carousel — horizontal scrolling card track with prev/next arrows + View all.
 // ---------------------------------------------------------------------------
 
 const carouselStyles = {
@@ -372,6 +379,15 @@ const carouselStyles = {
     fontSize: 11, fontWeight: 500, color: "var(--muted)",
     letterSpacing: 0, textTransform: "none",
   },
+  rightControls: { display: "flex", alignItems: "center", gap: 8 },
+  viewAll: {
+    fontSize: 12, color: "var(--muted)",
+    background: "transparent", border: "none",
+    cursor: "pointer", padding: "2px 4px",
+    display: "inline-flex", alignItems: "center", gap: 4,
+    textDecoration: "underline", textUnderlineOffset: 3,
+    transition: "color 120ms",
+  },
   arrows: { display: "flex", gap: 6 },
   arrow: {
     width: 30, height: 30,
@@ -383,7 +399,7 @@ const carouselStyles = {
   arrowDisabled: { opacity: 0.4, cursor: "not-allowed" },
 };
 
-function Carousel({ title, items, addedIds, justChangedId, onAdd, onPreview, CardComp }) {
+function Carousel({ title, items, addedIds, justChangedId, onAdd, onPreview, CardComp, onViewAll }) {
   const trackRef = React.useRef(null);
   const [canPrev, setCanPrev] = React.useState(false);
   const [canNext, setCanNext] = React.useState(true);
@@ -419,19 +435,26 @@ function Carousel({ title, items, addedIds, justChangedId, onAdd, onPreview, Car
         <div style={carouselStyles.sectionTitle}>
           {title} <span style={carouselStyles.count}>{items.length}</span>
         </div>
-        <div style={carouselStyles.arrows}>
-          <button className="btn-ghost-h"
-            style={{ ...carouselStyles.arrow, ...(canPrev ? {} : carouselStyles.arrowDisabled) }}
-            onClick={() => nudge(-1)} disabled={!canPrev} aria-label="Previous">
-            <Ic.arrowLeft size={14} />
-          </button>
-          <button className="btn-ghost-h"
-            style={{ ...carouselStyles.arrow, ...(canNext ? {} : carouselStyles.arrowDisabled) }}
-            onClick={() => nudge(1)} disabled={!canNext} aria-label="Next">
-            <span style={{ display: "inline-flex", transform: "scaleX(-1)" }}>
+        <div style={carouselStyles.rightControls}>
+          {onViewAll && (
+            <button style={carouselStyles.viewAll} onClick={onViewAll}>
+              View all
+            </button>
+          )}
+          <div style={carouselStyles.arrows}>
+            <button className="btn-ghost-h"
+              style={{ ...carouselStyles.arrow, ...(canPrev ? {} : carouselStyles.arrowDisabled) }}
+              onClick={() => nudge(-1)} disabled={!canPrev} aria-label="Previous">
               <Ic.arrowLeft size={14} />
-            </span>
-          </button>
+            </button>
+            <button className="btn-ghost-h"
+              style={{ ...carouselStyles.arrow, ...(canNext ? {} : carouselStyles.arrowDisabled) }}
+              onClick={() => nudge(1)} disabled={!canNext} aria-label="Next">
+              <span style={{ display: "inline-flex", transform: "scaleX(-1)" }}>
+                <Ic.arrowLeft size={14} />
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -594,13 +617,14 @@ const orgPageStyles = {
     padding: "4px 10px",
     fontSize: 12, fontWeight: 500,
     color: "var(--brand-text)",
+    whiteSpace: "nowrap",
   },
   sectionGap: { marginBottom: 32 },
   docsHeader: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
     marginBottom: 10,
   },
-  docsTitle: {
+  docsLeft: {
     fontSize: 11, fontWeight: 600, color: "var(--muted)",
     letterSpacing: "0.06em", textTransform: "uppercase",
     display: "flex", alignItems: "center", gap: 8,
@@ -613,9 +637,7 @@ const orgPageStyles = {
   },
 };
 
-function OrgLibraryPage({ orgItems, schemes, addedIds, onBack, onAdd, onPreview, justChangedId }) {
-  const videos = orgItems.filter((i) => i.kind === "video");
-  const docs = orgItems.filter((i) => i.kind === "doc");
+function OrgLibraryPage({ videos, docs, schemes, addedIds, onBack, onAdd, onPreview, justChangedId, onViewAll }) {
   const total = videos.length + schemes.length + docs.length;
 
   return (
@@ -659,6 +681,7 @@ function OrgLibraryPage({ orgItems, schemes, addedIds, onBack, onAdd, onPreview,
             onAdd={onAdd}
             onPreview={onPreview}
             CardComp={VideoCard}
+            onViewAll={() => onViewAll("video")}
           />
         </div>
       )}
@@ -673,6 +696,7 @@ function OrgLibraryPage({ orgItems, schemes, addedIds, onBack, onAdd, onPreview,
             onAdd={onAdd}
             onPreview={onPreview}
             CardComp={SchemeCard}
+            onViewAll={() => onViewAll("scheme")}
           />
         </div>
       )}
@@ -680,12 +704,15 @@ function OrgLibraryPage({ orgItems, schemes, addedIds, onBack, onAdd, onPreview,
       {docs.length > 0 && (
         <div>
           <div style={orgPageStyles.docsHeader}>
-            <div style={orgPageStyles.docsTitle}>
+            <div style={orgPageStyles.docsLeft}>
               Documents <span style={orgPageStyles.count}>{docs.length}</span>
             </div>
+            <button style={carouselStyles.viewAll} onClick={() => onViewAll("doc")}>
+              View all
+            </button>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {docs.map((item) => (
+            {docs.slice(0, 8).map((item) => (
               <ContentRow
                 key={item.id}
                 item={item}
@@ -696,6 +723,22 @@ function OrgLibraryPage({ orgItems, schemes, addedIds, onBack, onAdd, onPreview,
                 onPreview={onPreview}
               />
             ))}
+            {docs.length > 8 && (
+              <button
+                className="btn-ghost-h"
+                style={{
+                  width: "100%", padding: "10px",
+                  border: "1px dashed var(--border)",
+                  borderRadius: "var(--r-md)",
+                  fontSize: 13, color: "var(--muted)",
+                  background: "transparent", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                }}
+                onClick={() => onViewAll("doc")}
+              >
+                View all {docs.length} documents
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -716,6 +759,255 @@ function OrgLibraryPage({ orgItems, schemes, addedIds, onBack, onAdd, onPreview,
 }
 
 // ===========================================================================
+// Page: Browse All — full filterable/searchable view for large libraries.
+// ===========================================================================
+
+const browseStyles = {
+  searchWrap: {
+    position: "relative",
+    flex: "1 1 240px",
+    minWidth: 200,
+  },
+  searchIcon: {
+    position: "absolute", left: 10, top: "50%",
+    transform: "translateY(-50%)",
+    color: "var(--muted)", pointerEvents: "none",
+    display: "flex",
+  },
+  searchInput: {
+    width: "100%",
+    paddingLeft: 32, paddingRight: 12, paddingTop: 8, paddingBottom: 8,
+    border: "1px solid var(--border)", borderRadius: "var(--r-md)",
+    fontSize: 13, fontFamily: "var(--font)",
+    background: "var(--card)", color: "var(--fg)",
+    transition: "border-color 120ms, box-shadow 120ms",
+  },
+  filterBar: {
+    display: "flex", alignItems: "center", gap: 10,
+    marginBottom: 14, flexWrap: "wrap",
+  },
+  chipRow: { display: "flex", gap: 6, flexWrap: "wrap" },
+  sortRow: { display: "flex", gap: 6, marginLeft: "auto" },
+  resultsLine: {
+    display: "flex", alignItems: "center", gap: 10,
+    marginBottom: 14, flexWrap: "wrap",
+  },
+  resultsCount: { fontSize: 12, color: "var(--muted)" },
+  tagChipRow: { display: "flex", gap: 6, flexWrap: "wrap" },
+};
+
+function TypeChip({ id, label, count, active, onClick }) {
+  return (
+    <button
+      className={`type-chip${active ? " active" : ""}`}
+      onClick={onClick}
+      style={{
+        padding: "6px 12px",
+        borderRadius: 999,
+        fontSize: 12, fontWeight: active ? 500 : 400,
+        border: `1px solid ${active ? "var(--brand-border)" : "var(--border)"}`,
+        background: active ? "var(--brand-bg)" : "var(--card)",
+        color: active ? "var(--brand-text)" : "var(--muted)",
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        display: "inline-flex", alignItems: "center", gap: 6,
+        transition: "background 120ms, border-color 120ms, color 120ms",
+      }}
+    >
+      {label}
+      <span style={{
+        fontSize: 10.5, fontWeight: 500, lineHeight: 1,
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        background: active ? "var(--brand-border)" : "var(--surface)",
+        color: active ? "white" : "var(--muted)",
+        borderRadius: 999, padding: "1px 5px", minWidth: 18,
+        transition: "background 120ms, color 120ms",
+      }}>
+        {count}
+      </span>
+    </button>
+  );
+}
+
+function SortBtn({ id, label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "6px 10px",
+        borderRadius: "var(--r-sm)",
+        fontSize: 12, fontWeight: active ? 500 : 400,
+        border: `1px solid ${active ? "var(--border-hover)" : "var(--border)"}`,
+        background: active ? "var(--surface)" : "transparent",
+        color: active ? "var(--fg)" : "var(--muted)",
+        cursor: "pointer",
+        transition: "background 120ms, color 120ms, border-color 120ms",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function TagChip({ tag, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "3px 9px",
+        borderRadius: 999, fontSize: 11, fontWeight: 500,
+        border: `1px solid ${active ? "var(--info-border)" : "var(--border)"}`,
+        background: active ? "var(--info-bg)" : "transparent",
+        color: active ? "var(--info-text)" : "var(--muted)",
+        cursor: "pointer",
+        transition: "background 100ms, color 100ms, border-color 100ms",
+      }}
+    >
+      {tag === "all" ? "All topics" : tag}
+    </button>
+  );
+}
+
+function BrowseAllPage({ videos, schemes, docs, addedIds, onBack, onAdd, onPreview, justChangedId, defaultType }) {
+  const [search, setSearch] = React.useState("");
+  const [typeFilter, setTypeFilter] = React.useState(defaultType || "all");
+  const [tagFilter, setTagFilter] = React.useState("all");
+  const [sort, setSort] = React.useState("recent");
+
+  const all = [...videos, ...schemes, ...docs];
+
+  const filtered = React.useMemo(() => {
+    let result = all.filter((item) => {
+      if (typeFilter !== "all" && item.kind !== typeFilter) return false;
+      if (tagFilter !== "all" && item.tag !== tagFilter) return false;
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        return (
+          item.name.toLowerCase().includes(q) ||
+          (item.description && item.description.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+    if (sort === "az") {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return result;
+  }, [all, typeFilter, tagFilter, search, sort]);
+
+  const counts = {
+    all: all.length,
+    video: videos.length,
+    scheme: schemes.length,
+    doc: docs.length,
+  };
+
+  const typeOptions = [
+    { id: "all", label: "All" },
+    { id: "video", label: "Videos" },
+    { id: "scheme", label: "Schemes" },
+    { id: "doc", label: "Documents" },
+  ];
+
+  return (
+    <div>
+      <button className="btn-ghost-h" style={olStyles.breadcrumb} onClick={onBack}>
+        <Ic.arrowLeft size={13} /> Org Library
+      </button>
+
+      <div style={{ ...clStyles.header, marginTop: 4, marginBottom: 20 }}>
+        <div>
+          <div style={clStyles.title}>Browse All</div>
+          <div style={clStyles.sub}>
+            {ORG.name}'s complete library — {all.length} approved items across videos, schemes, and documents.
+          </div>
+        </div>
+      </div>
+
+      {/* Search + type filter + sort */}
+      <div style={browseStyles.filterBar}>
+        <div style={browseStyles.searchWrap}>
+          <div style={browseStyles.searchIcon}>
+            <Ic.search size={14} />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by name or description…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="browse-search"
+            style={browseStyles.searchInput}
+          />
+        </div>
+
+        <div style={browseStyles.chipRow}>
+          {typeOptions.map(({ id, label }) => (
+            <TypeChip
+              key={id}
+              id={id}
+              label={label}
+              count={id === "all" ? counts.all : id === "video" ? counts.video : id === "scheme" ? counts.scheme : counts.doc}
+              active={typeFilter === id}
+              onClick={() => setTypeFilter(id)}
+            />
+          ))}
+        </div>
+
+        <div style={browseStyles.sortRow}>
+          <SortBtn id="recent" label="Recent" active={sort === "recent"} onClick={() => setSort("recent")} />
+          <SortBtn id="az" label="A–Z" active={sort === "az"} onClick={() => setSort("az")} />
+        </div>
+      </div>
+
+      {/* Results count + topic tags */}
+      <div style={browseStyles.resultsLine}>
+        <span style={browseStyles.resultsCount}>
+          {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+          {search.trim() ? ` for "${search.trim()}"` : ""}
+        </span>
+        <div style={browseStyles.tagChipRow}>
+          {["all", ...TAGS].map((tag) => (
+            <TagChip
+              key={tag}
+              tag={tag}
+              active={tagFilter === tag}
+              onClick={() => setTagFilter(tag)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Results list */}
+      {filtered.length === 0 ? (
+        <div style={clStyles.empty}>
+          <div style={{ display: "grid", placeItems: "center", marginBottom: 12, color: "var(--border-hover)" }}>
+            <Ic.inbox size={36} />
+          </div>
+          <div style={clStyles.emptyTitle}>No results</div>
+          <div style={{ fontSize: 13 }}>
+            Try a different search or clear the filters.
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {filtered.map((item) => (
+            <ContentRow
+              key={item.id}
+              item={item}
+              mode="org-source"
+              isAdded={addedIds.includes(item.id)}
+              justChanged={item.id === justChangedId}
+              onAdd={onAdd}
+              onPreview={onPreview}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===========================================================================
 // Root
 // ===========================================================================
 
@@ -725,6 +1017,7 @@ function App() {
   const [justChangedId, setJustChangedId] = React.useState(null);
   const [ownItems] = React.useState(COACH_OWN_ITEMS);
   const [previewId, setPreviewId] = React.useState(null);
+  const [browseAllDefaultType, setBrowseAllDefaultType] = React.useState("all");
 
   const addedOrgItems = ALL_ORG_CONTENT.filter((i) => addedIds.includes(i.id));
   const previewItem = previewId ? findOrgItem(previewId) : null;
@@ -743,9 +1036,14 @@ function App() {
     setAddedIds(addedIds.filter((x) => x !== id));
   }
   function handlePreview(item) {
-    // Only org items get a preview
-    if (!item || (!item.id.startsWith("org-") && !item.id.startsWith("scheme-"))) return;
+    if (!item) return;
+    const isOrg = item.id.startsWith("org-") || item.id.startsWith("scheme-");
+    if (!isOrg) return;
     setPreviewId(item.id);
+  }
+  function navigateBrowseAll(type) {
+    setBrowseAllDefaultType(type || "all");
+    setRoute("browse-all");
   }
 
   return (
@@ -763,13 +1061,28 @@ function App() {
         )}
         {route === "org-library" && (
           <OrgLibraryPage
-            orgItems={ORG_ITEMS}
+            videos={ORG_VIDEOS}
+            docs={ORG_DOCS}
             schemes={ORG_SCHEMES}
             addedIds={addedIds}
             onBack={() => setRoute("library")}
             onAdd={handleAdd}
             onPreview={handlePreview}
             justChangedId={justChangedId}
+            onViewAll={navigateBrowseAll}
+          />
+        )}
+        {route === "browse-all" && (
+          <BrowseAllPage
+            videos={ORG_VIDEOS}
+            docs={ORG_DOCS}
+            schemes={ORG_SCHEMES}
+            addedIds={addedIds}
+            onBack={() => setRoute("org-library")}
+            onAdd={handleAdd}
+            onPreview={handlePreview}
+            justChangedId={justChangedId}
+            defaultType={browseAllDefaultType}
           />
         )}
       </Shell>

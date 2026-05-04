@@ -1,0 +1,2937 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Athes TeamPass — Org Library prototype</title>
+<meta name="viewport" content="width=1280" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* PRD tokens — locked */
+    --bg: #FAFAF9;
+    --surface: #F2F1EE;
+    --card: #FFFFFF;
+    --fg: #272520;
+    --muted: #6E6A63;
+    --border: #E4E2DD;
+    --border-hover: #D1CEC7;
+
+    --primary-bg: #272520;
+    --primary-text: #FFFFFF;
+    --primary-border: #10100E;
+
+    --brand-bg: #DFFA99;
+    --brand-text: #52770D;
+    --brand-border: #6E9D10;
+
+    --success-bg: #D1FAE5;
+    --success-text: #096745;
+    --success-border: #A5F3CD;
+
+    --error-bg: #FDF2F2;
+    --error-text: #AF2828;
+    --error-border: #F8C4C4;
+
+    --warning-bg: #FDF1CE;
+    --warning-text: #86580E;
+    --warning-border: #FBE298;
+
+    --info-bg: #EFF5FF;
+    --info-text: #2241A3;
+    --info-border: #BED3FC;
+
+    --r-xs: 4px; --r-sm: 6px; --r-md: 8px; --r-lg: 12px; --r-xl: 16px;
+    --shadow-sm: 0 1px 2px 0 #2725200F, 0 1px 1px 0 #2725200A;
+
+    --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    color: var(--fg);
+    background: var(--bg);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+
+
+<script type="text/babel">
+// Seed data for the prototype.
+// Org content lives at the org level. The coach's personal library is
+// derived from (a) their own uploads + (b) any org items they've added.
+
+const ORG = { name: "Boca", team: "Volley" };
+
+// ---------------------------------------------------------------------------
+// Coach's own uploads (always editable, never read-only).
+// ---------------------------------------------------------------------------
+const COACH_OWN_ITEMS = [
+  {
+    id: "own-1",
+    kind: "video",
+    name: "Dodge and throw drill — advanced",
+    meta: "Video · Unpublished · Added Apr 28, 2026",
+    published: false,
+    addedAt: "Apr 28, 2026",
+  },
+  {
+    id: "own-2",
+    kind: "video",
+    name: "aw teampass add admin test 5309",
+    meta: "Video · Unpublished · Added Apr 27, 2026",
+    published: false,
+    addedAt: "Apr 27, 2026",
+  },
+  {
+    id: "own-3",
+    kind: "doc",
+    name: "athes_teampass_ux_report_v2.docx",
+    meta: "Document · Unpublished · Added Apr 26, 2026",
+    published: false,
+    addedAt: "Apr 26, 2026",
+  },
+  {
+    id: "own-4",
+    kind: "doc",
+    name: "teampass-clubhouse-prd.docx",
+    meta: "Document · Published · Added Apr 22, 2026",
+    published: true,
+    addedAt: "Apr 22, 2026",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Document body content. Used by the long-doc preview reader.
+// Each doc has structured blocks: heading | h2 | h3 | p | list | quote | divider.
+// ---------------------------------------------------------------------------
+const DOC_BODIES = {
+  "org-3": {
+    pageCount: 8,
+    wordCount: 3120,
+    fileType: "PDF",
+    fileSize: "1.4 MB",
+    blocks: [
+      { type: "heading", text: "Boca Defensive Scheme — 2025 Season" },
+      { type: "p", text: "This document is the canonical reference for our defensive scheme this season. All teams within Boca should align to these principles, with team-specific variations documented as addenda." },
+      { type: "p", text: "The scheme balances pressure and recovery. We want to force the offense into predictable areas of the floor, then collapse with weak-side help. Coaches should review this in pre-season and revisit at mid-season checkpoints." },
+      { type: "h2", text: "1. Core Principles" },
+      { type: "p", text: "Our scheme rests on four non-negotiable principles. Every adjustment must remain consistent with these. If a situational call seems to violate one, default to the principle." },
+      { type: "list", items: [
+        "Ball pressure: every on-ball defender contests the catch and the first move.",
+        "One pass away: deny strong-side, force the catch backwards or to the perimeter.",
+        "Two passes away: gap help in line with the ball and the rim.",
+        "Weak-side: rotate to the rim first, then the next available shooter.",
+      ] },
+      { type: "h2", text: "2. Stance and Footwork" },
+      { type: "p", text: "Defenders maintain a low athletic stance with feet wider than shoulders. Weight stays on the balls of the feet. The first step is always a directional push step — never a cross step on the initial reaction." },
+      { type: "h3", text: "2.1 Closeouts" },
+      { type: "p", text: "Closeouts are short and choppy in the last two strides, with hands high and active. Defenders should arrive with weight back, ready to push off in the direction the ball-handler chooses." },
+      { type: "h3", text: "2.2 Recovery" },
+      { type: "p", text: "On a beat, the on-ball defender opens to the help side, sprints to the level of the ball, and re-contests. We do not chase from behind unless the help-side defender has already cut off the drive." },
+      { type: "h2", text: "3. Pick-and-Roll Coverage" },
+      { type: "p", text: "Our base coverage is drop, with a hard hedge as the secondary call against teams with a primary scoring guard. The defender on the screener is responsible for the call, and the on-ball defender must hear it." },
+      { type: "list", items: [
+        "Drop: big sits at the level of the screen, guard fights over.",
+        "Hedge: big steps out aggressively to the level of the ball, recovers on the second action.",
+        "Switch: only on like-sized matchups or in late-clock situations.",
+      ] },
+      { type: "quote", text: "If you don't communicate the coverage, you don't have a coverage. Talk early, talk loud." },
+      { type: "h2", text: "4. Transition Defense" },
+      { type: "p", text: "On a missed shot or turnover, the first three players sprint to the paint with eyes on the ball. The fourth player sprints to the strong-side wing. The fifth player is the safety, last to cross half-court." },
+      { type: "h3", text: "4.1 Match-up Rules" },
+      { type: "p", text: "We match up by floor position, not by jersey. The first defender back picks up the ball. The second defender picks up the most dangerous threat. After the ball is contained, we sort matchups." },
+      { type: "h2", text: "5. Adjustments" },
+      { type: "p", text: "Mid-game adjustments are made at quarter breaks unless the score gap demands earlier intervention. Coaches should signal adjustments using the season call sheet, not improvised hand signals." },
+    ],
+  },
+  "org-5": {
+    pageCount: 6,
+    wordCount: 1980,
+    fileType: "PDF",
+    fileSize: "920 KB",
+    blocks: [
+      { type: "heading", text: "Pre-Season Conditioning Plan" },
+      { type: "p", text: "A six-week conditioning ramp leading into the competitive season. Designed to build aerobic base, then layer in anaerobic capacity, then sport-specific intensity." },
+      { type: "h2", text: "Week 1–2: Aerobic Base" },
+      { type: "p", text: "Three sessions per week. Steady-state runs at 65–75% of max heart rate, 30–40 minutes. Focus on consistent breathing and cadence. No interval work yet." },
+      { type: "list", items: [
+        "Monday: 30 min steady run + mobility cooldown",
+        "Wednesday: 35 min steady run + core circuit",
+        "Friday: 40 min steady run + stretching",
+      ] },
+      { type: "h2", text: "Week 3–4: Tempo and Threshold" },
+      { type: "p", text: "Introduce tempo work to raise the lactate threshold. Sessions become four times per week. Include one threshold session and one tempo session per week." },
+      { type: "h3", text: "Sample threshold session" },
+      { type: "p", text: "10 min warm-up. Then 4 × 6 minutes at threshold pace with 90 seconds easy between. 10 min cool-down. Heart rate should sit at 85–90% of max during work intervals." },
+      { type: "h2", text: "Week 5–6: Sport-Specific" },
+      { type: "p", text: "Intervals matched to game demands. Short bursts of 10–30 seconds at near-max effort, with full recovery. Add change-of-direction work and reactive drills." },
+      { type: "quote", text: "The ramp ends with a full-intensity scrimmage week. Treat conditioning as the foundation, not the headline." },
+    ],
+  },
+  "org-7": {
+    pageCount: 4,
+    wordCount: 1520,
+    fileType: "PDF",
+    fileSize: "640 KB",
+    blocks: [
+      { type: "heading", text: "Volleyball Serve Receive Primer" },
+      { type: "p", text: "Reading the server, platform mechanics, and target passing. This primer covers fundamentals every passer should internalize before serve-receive drills become game-realistic." },
+      { type: "h2", text: "Reading the Server" },
+      { type: "p", text: "Watch the toss, not the server's body. Toss height and location predict serve type with high reliability. A toss in front of the lead shoulder usually produces a topspin jump serve." },
+      { type: "h2", text: "Platform Mechanics" },
+      { type: "list", items: [
+        "Hands together, thumbs flat and parallel, wrists down.",
+        "Angle the platform toward the target, not at the ball.",
+        "Absorb on contact — do not swing the arms.",
+      ] },
+      { type: "h2", text: "Target Passing" },
+      { type: "p", text: "The target is a 4-foot box on the right side of the net, two feet off. Passes inside this box give the setter every option. Passes outside it eliminate the middle attack." },
+    ],
+  },
+  "org-9": {
+    pageCount: 3,
+    wordCount: 1010,
+    fileType: "DOCX",
+    fileSize: "180 KB",
+    blocks: [
+      { type: "heading", text: "Game-Day Checklist (Coach Edition)" },
+      { type: "p", text: "End-to-end checklist from arrival through post-game review. Use this as a living document — adapt for travel games and tournament play." },
+      { type: "h2", text: "Pre-Game (90 min before tip)" },
+      { type: "list", items: [
+        "Arrive at venue, locate locker room.",
+        "Confirm officials and scorekeeper.",
+        "Set up film equipment and check audio.",
+        "Run dynamic warm-up at 60 minutes before tip.",
+        "Position-specific work at 40 minutes before tip.",
+      ] },
+      { type: "h2", text: "Pre-Game (15 min before tip)" },
+      { type: "list", items: [
+        "Final scout review with starters.",
+        "Confirm starting lineup with officials.",
+        "Pre-game speech — keep it under 3 minutes.",
+      ] },
+      { type: "h2", text: "Post-Game" },
+      { type: "p", text: "Cool-down, brief film note for tomorrow, and a 60-second team huddle. Save the long debrief for the next day's film session." },
+    ],
+  },
+  "org-12": {
+    pageCount: 5,
+    wordCount: 1740,
+    fileType: "PDF",
+    fileSize: "780 KB",
+    blocks: [
+      { type: "heading", text: "Player Evaluation Rubric" },
+      { type: "p", text: "Standard rubric for mid-season and end-of-season evaluations. Each player is scored 1–5 across four domains. Aggregate scores feed into development plans." },
+      { type: "h2", text: "Domain 1: Technical Skill" },
+      { type: "p", text: "Position-specific fundamentals. For ball handlers: dribble, pass, shoot. For bigs: post moves, screens, finishing. Score against position standard, not absolute level." },
+      { type: "h2", text: "Domain 2: Tactical Awareness" },
+      { type: "p", text: "Decision making in live play. Reads, off-ball movement, defensive rotations. The player either sees the play or doesn't — score what you observe, not what you wish." },
+      { type: "h2", text: "Domain 3: Effort and Compete" },
+      { type: "p", text: "Sprint speed in transition, contested rebounds, ball pressure on defense. This is the easiest domain to coach and the easiest to score honestly." },
+      { type: "h2", text: "Domain 4: Coachability" },
+      { type: "p", text: "Response to feedback, willingness to try a new approach, behavior in practice. Score how the player shows up, not how talented they are." },
+    ],
+  },
+  "org-13": {
+    pageCount: 4,
+    wordCount: 1280,
+    fileType: "PDF",
+    fileSize: "520 KB",
+    blocks: [
+      { type: "heading", text: "Parent Communication Guidelines" },
+      { type: "p", text: "Tone, cadence, and escalation paths for parent communications. Boca expects all coaches to maintain professional, proactive contact with families." },
+      { type: "h2", text: "Cadence" },
+      { type: "list", items: [
+        "Pre-season: one welcome email by August 15.",
+        "In-season: one update every two weeks.",
+        "Post-season: one wrap-up email within 10 days of the final game.",
+      ] },
+      { type: "h2", text: "Tone" },
+      { type: "p", text: "Direct, warm, and specific. Avoid vague positivity. Cite specific player progress when possible. Never compare players in writing." },
+      { type: "h2", text: "Escalation" },
+      { type: "p", text: "If a conversation becomes contentious, move to a phone call. If the issue persists, loop in the program director. Document all formal escalations." },
+    ],
+  },
+};
+
+// Default body for any document without a custom one.
+const DEFAULT_DOC_BODY = {
+  pageCount: 5,
+  wordCount: 1620,
+  fileType: "PDF",
+  fileSize: "740 KB",
+  blocks: [
+    { type: "heading", text: "Document overview" },
+    { type: "p", text: "This document was approved by your organization for use across all teams. The full content is preserved when added to your library — players see the version your org published." },
+    { type: "h2", text: "Section 1" },
+    { type: "p", text: "Coaches should review this document in full before using it with players. Highlights have been preserved from the original organization upload." },
+    { type: "list", items: [
+      "Reference key concepts before practice.",
+      "Use the diagrams as discussion prompts.",
+      "Pair with relevant video drills where appropriate.",
+    ] },
+    { type: "h2", text: "Section 2" },
+    { type: "p", text: "The latter half of the document covers application notes and common variations. Coaches with experienced groups may skip ahead; younger groups should work through it linearly." },
+    { type: "quote", text: "When in doubt, default to the principle and adjust the tactic." },
+    { type: "h2", text: "Section 3" },
+    { type: "p", text: "Closing notes and references. The bibliography includes both internal Boca documents and external materials — see the org library for related items." },
+  ],
+};
+
+// Tags applied to org content for filtering in the Browse All view.
+// (Topic tags are illustrative.)
+const TAGS = ["Defense", "Offense", "Conditioning", "Set Plays", "Fundamentals", "Player Dev", "Operations"];
+
+// ---------------------------------------------------------------------------
+// Helpers to expand seed lists.
+// Generates a realistic-feeling library of 40+ videos, 50+ schemes, 25+ docs.
+// ---------------------------------------------------------------------------
+
+function pad2(n) { return String(n).padStart(2, "0"); }
+
+function makeDate(month, day, year) {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[month - 1]} ${day}, ${year}`;
+}
+
+function dur(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${pad2(s)}`;
+}
+
+// Curated video pool (fundamentals + tactics + drills).
+const ORG_VIDEOS_RAW = [
+  ["Ground ball fundamentals", "Footwork, body position, and clean pickup mechanics.", 28, "Feb 2, 2025", "Fundamentals"],
+  ["Give-and-go — attack movement", "Spacing and timing for a clean two-player give-and-go.", 24, "Feb 14, 2025", "Offense"],
+  ["Transition offense — 3v2 break", "Decision tree for the trailing player on a 3v2.", 41, "Mar 4, 2025", "Offense"],
+  ["Set play — corner overload", "Numbers advantage on the strong-side corner.", 33, "Mar 18, 2025", "Set Plays"],
+  ["Defensive footwork ladder", "Ladder progression for defensive shuffle and crossover steps.", 19, "Feb 21, 2025", "Defense"],
+  ["Rebound positioning — boxing out", "Body angle, hand activity, and the contact-then-pursue rule.", 36, "Feb 9, 2025", "Defense"],
+  ["Volley defensive scheme walk-through", "Coach-led walkthrough of the printed defensive scheme.", 62, "Jan 11, 2025", "Defense"],
+  ["Warm-up routine — 8 minute", "Dynamic warm-up the staff has standardized across all teams.", 48, "Oct 4, 2024", "Conditioning"],
+  ["Closeout technique — short and choppy", "Arrival angle, hand position, and the recovery step.", 22, "Feb 26, 2025", "Defense"],
+  ["Pick-and-roll — drop coverage drill", "Big drops, guard fights over, with help-side rotation.", 54, "Mar 12, 2025", "Defense"],
+  ["Pick-and-roll — hedge coverage drill", "Hard hedge progression with show-and-recover.", 47, "Mar 14, 2025", "Defense"],
+  ["Shell drill — base", "Four-on-four shell with help-side rotations and recoveries.", 71, "Jan 22, 2025", "Defense"],
+  ["Shell drill — closeout add-on", "Shell with skip passes and contested closeouts.", 58, "Jan 28, 2025", "Defense"],
+  ["Free-throw line spacing", "Off-ball spacing rules with a free-throw shooter on the line.", 26, "Feb 1, 2025", "Offense"],
+  ["Two-man game — wing entry", "Side pick-and-roll from a wing entry.", 39, "Mar 22, 2025", "Offense"],
+  ["Two-man game — top entry", "Top pick-and-roll with a stagger option.", 42, "Mar 24, 2025", "Offense"],
+  ["Conditioning ladder — sprint pyramid", "Pyramid intervals matched to game demands.", 84, "Sep 18, 2024", "Conditioning"],
+  ["Conditioning circuit — full court", "Full-court agility circuit, six stations.", 96, "Sep 20, 2024", "Conditioning"],
+  ["Footwork — defensive slide pyramid", "Slide pyramid progression with reactive cues.", 45, "Oct 12, 2024", "Conditioning"],
+  ["Setter platform — overhead release", "Hand position, release angle, and follow-through.", 31, "Feb 6, 2025", "Fundamentals"],
+  ["Setter footwork — under the ball", "Getting square to the target before the contact.", 28, "Feb 8, 2025", "Fundamentals"],
+  ["Serve receive — three-passer rotation", "Standard three-passer base with seam responsibilities.", 53, "Feb 12, 2025", "Fundamentals"],
+  ["Serve receive — two-passer alignment", "Two-passer system with a libero seam call.", 49, "Feb 13, 2025", "Fundamentals"],
+  ["Hitting approach — three-step", "Three-step approach with arm swing mechanics.", 35, "Feb 18, 2025", "Fundamentals"],
+  ["Hitting approach — four-step", "Four-step approach for outside hitters.", 38, "Feb 19, 2025", "Fundamentals"],
+  ["Block timing — middle", "Middle blocker timing on the read.", 41, "Feb 25, 2025", "Defense"],
+  ["Block timing — outside", "Outside blocker timing and seam responsibilities.", 39, "Feb 26, 2025", "Defense"],
+  ["Set play — quick middle", "Quick middle attack with a back-row decoy.", 32, "Mar 6, 2025", "Set Plays"],
+  ["Set play — back-row attack", "Back-row attack from the right side.", 36, "Mar 8, 2025", "Set Plays"],
+  ["Set play — slide attack", "Middle slide attack with timing cues.", 33, "Mar 10, 2025", "Set Plays"],
+  ["Free play — six-on-six wash", "Wash drill with serve-receive and transition reps.", 124, "Jan 30, 2025", "Offense"],
+  ["Free play — queen of the court", "Queen of the court rotation with the bench.", 96, "Feb 4, 2025", "Offense"],
+  ["Recovery and mobility — post-practice", "Standard mobility flow for after practice.", 52, "Oct 28, 2024", "Conditioning"],
+  ["Mental performance — pre-game routine", "Player-led pre-game mental routine.", 64, "Nov 14, 2024", "Player Dev"],
+  ["Film study — guided session", "How a guided film session should run.", 88, "Nov 22, 2024", "Player Dev"],
+  ["Player development — individual session structure", "Standard structure for a 30-minute IDP session.", 71, "Dec 3, 2024", "Player Dev"],
+  ["Captain meeting — agenda template", "Weekly captain meeting walk-through.", 42, "Dec 9, 2024", "Operations"],
+  ["Pre-season parents meeting — outline", "Outline for the pre-season parents meeting.", 58, "Aug 18, 2024", "Operations"],
+  ["Mid-season check-in — coaches", "Mid-season coaches check-in framework.", 47, "Jan 8, 2025", "Operations"],
+  ["End-of-season debrief — format", "End-of-season debrief format and prompts.", 51, "Apr 18, 2025", "Operations"],
+  ["Travel day — operations checklist", "Travel day operations checklist walkthrough.", 36, "Mar 28, 2025", "Operations"],
+  ["Officials communication — guidelines", "How to communicate with officials in-game.", 29, "Apr 2, 2025", "Operations"],
+];
+
+const ORG_VIDEOS = ORG_VIDEOS_RAW.map((row, i) => ({
+  id: `org-v-${i + 1}`,
+  kind: "video",
+  name: row[0],
+  duration: dur(row[2]),
+  addedToOrg: row[3],
+  description: row[1],
+  tag: row[4],
+}));
+
+// Schemes & formations — 50+ entries.
+// Each is a ScXY where X is the formation family and Y the variant.
+// We seed 8 hand-tuned ones and procedurally generate the rest with positions
+// that read like real diagrams.
+const HAND_SCHEMES = [
+  {
+    name: "Corner overload — strong side",
+    addedToOrg: "Mar 5, 2025",
+    description: "4-out trap on the strong-side corner with weak-side rotation.",
+    tag: "Set Plays",
+    marks: [
+      { type: "o", x: 18, y: 25 }, { type: "o", x: 28, y: 50 }, { type: "o", x: 22, y: 75 },
+      { type: "x", x: 70, y: 30 }, { type: "x", x: 78, y: 55 }, { type: "x", x: 72, y: 78 },
+      { type: "ball", x: 28, y: 50 },
+      { type: "arrow", x: 28, y: 50, x2: 60, y2: 30 },
+      { type: "arrow", x: 18, y: 25, x2: 50, y2: 25 },
+    ],
+  },
+  {
+    name: "2-3 zone defense — base",
+    addedToOrg: "Feb 16, 2025",
+    description: "Standard 2-3 zone with weak-side help responsibilities.",
+    tag: "Defense",
+    marks: [
+      { type: "x", x: 35, y: 30 }, { type: "x", x: 35, y: 70 },
+      { type: "x", x: 55, y: 25 }, { type: "x", x: 55, y: 50 }, { type: "x", x: 55, y: 75 },
+      { type: "o", x: 22, y: 50 }, { type: "ball", x: 22, y: 50 },
+    ],
+  },
+  {
+    name: "Give-and-go entry — wing",
+    addedToOrg: "Jan 24, 2025",
+    description: "Two-player give-and-go from the wing into the lane.",
+    tag: "Offense",
+    marks: [
+      { type: "o", x: 22, y: 30 }, { type: "o", x: 38, y: 60 },
+      { type: "x", x: 35, y: 35 }, { type: "x", x: 60, y: 60 },
+      { type: "ball", x: 22, y: 30 },
+      { type: "arrow", x: 22, y: 30, x2: 38, y2: 60 },
+      { type: "arrow", x: 22, y: 30, x2: 55, y2: 35 },
+      { type: "arrow", x: 38, y: 60, x2: 55, y2: 35 },
+    ],
+  },
+  {
+    name: "Set play — back-screen lob",
+    addedToOrg: "Apr 1, 2025",
+    description: "Down-screen for the cutter, lob entry over the top.",
+    tag: "Set Plays",
+    marks: [
+      { type: "o", x: 22, y: 50 }, { type: "o", x: 45, y: 25 }, { type: "o", x: 45, y: 70 },
+      { type: "x", x: 38, y: 28 }, { type: "x", x: 60, y: 50 },
+      { type: "ball", x: 22, y: 50 },
+      { type: "arrow", x: 45, y: 70, x2: 65, y2: 30 },
+      { type: "arrow", x: 22, y: 50, x2: 65, y2: 30 },
+    ],
+  },
+  {
+    name: "1-3-1 zone — soft trap",
+    addedToOrg: "Feb 4, 2025",
+    description: "1-3-1 zone with corner soft-trap rotation.",
+    tag: "Defense",
+    marks: [
+      { type: "x", x: 30, y: 50 }, { type: "x", x: 50, y: 25 }, { type: "x", x: 50, y: 50 }, { type: "x", x: 50, y: 75 },
+      { type: "x", x: 70, y: 50 },
+      { type: "o", x: 18, y: 50 }, { type: "ball", x: 18, y: 50 },
+    ],
+  },
+  {
+    name: "Horns — twist option",
+    addedToOrg: "Mar 12, 2025",
+    description: "Horns set with a guard-guard twist into a pick-and-roll.",
+    tag: "Offense",
+    marks: [
+      { type: "o", x: 35, y: 50 }, { type: "o", x: 28, y: 38 }, { type: "o", x: 28, y: 62 },
+      { type: "o", x: 18, y: 30 }, { type: "o", x: 18, y: 70 },
+      { type: "ball", x: 35, y: 50 },
+      { type: "arrow", x: 28, y: 38, x2: 28, y2: 62 },
+      { type: "arrow", x: 35, y: 50, x2: 50, y2: 50 },
+    ],
+  },
+  {
+    name: "Spread pick-and-roll — middle",
+    addedToOrg: "Feb 21, 2025",
+    description: "Middle pick-and-roll with two shooters spaced corner.",
+    tag: "Offense",
+    marks: [
+      { type: "o", x: 30, y: 50 }, { type: "o", x: 40, y: 50 },
+      { type: "o", x: 18, y: 18 }, { type: "o", x: 18, y: 82 }, { type: "o", x: 25, y: 25 },
+      { type: "x", x: 38, y: 48 }, { type: "x", x: 48, y: 50 },
+      { type: "ball", x: 30, y: 50 },
+      { type: "arrow", x: 30, y: 50, x2: 55, y2: 35 },
+    ],
+  },
+  {
+    name: "Box-and-one — defensive special",
+    addedToOrg: "Mar 30, 2025",
+    description: "Box-and-one against a primary scorer.",
+    tag: "Defense",
+    marks: [
+      { type: "x", x: 38, y: 30 }, { type: "x", x: 38, y: 70 },
+      { type: "x", x: 55, y: 30 }, { type: "x", x: 55, y: 70 },
+      { type: "x", x: 25, y: 50 },
+      { type: "o", x: 22, y: 50 }, { type: "ball", x: 22, y: 50 },
+    ],
+  },
+];
+
+const SCHEME_FAMILIES = [
+  ["Quick-set", "Fast tempo set with middle attack into a perimeter look.", "Set Plays"],
+  ["Pin-down", "Pin-down screen with a curl into the paint.", "Offense"],
+  ["Iverson cut", "Iverson cut into a pick-and-roll on the wing.", "Offense"],
+  ["Floppy", "Floppy action with double-stagger options.", "Offense"],
+  ["Zipper", "Zipper cut into a top of the key set.", "Offense"],
+  ["Fist", "Fist call with an empty corner pick-and-roll.", "Offense"],
+  ["Stagger", "Stagger screens for the lead shooter.", "Offense"],
+  ["Hammer", "Hammer screen on the weak side baseline.", "Set Plays"],
+  ["Drag", "Drag screen in early offense.", "Offense"],
+  ["Veer", "Veer cut into a backdoor.", "Offense"],
+  ["Trail", "Trail action into a stagger.", "Offense"],
+  ["Diamond", "Diamond press break alignment.", "Offense"],
+  ["1-2-2 press", "1-2-2 full-court press with rotation.", "Defense"],
+  ["2-2-1 press", "2-2-1 three-quarter court press.", "Defense"],
+  ["3-2 zone", "3-2 zone with extended pressure.", "Defense"],
+  ["Triangle-and-two", "Triangle-and-two with two ball-deniers.", "Defense"],
+  ["Match-up zone", "Match-up zone with man rules.", "Defense"],
+  ["BLOB", "Baseline out-of-bounds set.", "Set Plays"],
+  ["SLOB", "Sideline out-of-bounds set.", "Set Plays"],
+  ["After-timeout", "After-timeout horns set.", "Set Plays"],
+  ["End-of-quarter", "End-of-quarter clock-killer set.", "Set Plays"],
+];
+
+// Procedural marks generator — placeholder pitch shapes by family index.
+function genMarks(seed) {
+  const o = [];
+  const x = [];
+  for (let i = 0; i < 5; i++) {
+    o.push({ type: "o", x: 18 + ((i * 13 + seed * 7) % 30), y: 18 + ((i * 17 + seed * 11) % 64) });
+    x.push({ type: "x", x: 50 + ((i * 11 + seed * 13) % 30), y: 18 + ((i * 19 + seed * 5) % 64) });
+  }
+  const ball = { type: "ball", x: o[0].x, y: o[0].y };
+  const arrows = [
+    { type: "arrow", x: o[0].x, y: o[0].y, x2: o[2].x, y2: o[2].y },
+    { type: "arrow", x: o[1].x, y: o[1].y, x2: 55 + (seed % 18), y2: 35 + (seed % 30) },
+  ];
+  return [...o, ...x, ball, ...arrows];
+}
+
+const GENERATED_SCHEMES = [];
+let schemeCount = 0;
+SCHEME_FAMILIES.forEach((family, fi) => {
+  const variants = ["base", "weak side", "counter", "quick"];
+  variants.forEach((variant, vi) => {
+    schemeCount += 1;
+    const day = ((schemeCount * 7) % 27) + 1;
+    const month = ((schemeCount * 3) % 12) + 1;
+    GENERATED_SCHEMES.push({
+      name: `${family[0]} — ${variant}`,
+      addedToOrg: makeDate(month, day, 2025),
+      description: family[1],
+      tag: family[2],
+      marks: genMarks(fi * 4 + vi + 1),
+    });
+  });
+});
+
+const ORG_SCHEMES = [...HAND_SCHEMES, ...GENERATED_SCHEMES].map((s, i) => ({
+  id: `scheme-${i + 1}`,
+  kind: "scheme",
+  field: "horizontal",
+  ...s,
+}));
+
+// Documents — 25+ items.
+const ORG_DOCS_RAW = [
+  ["Boca defensive scheme 2025", "Canonical defensive scheme and rotations for the season.", "Jan 14, 2025", "Defense"],
+  ["Pre-season conditioning plan", "Six-week conditioning ramp leading into the competitive season.", "Dec 2, 2024", "Conditioning"],
+  ["Volleyball serve receive primer", "Reading the server, platform mechanics, and pass targets.", "Jan 22, 2025", "Fundamentals"],
+  ["Game-day checklist (coach edition)", "End-to-end checklist from arrival through post-game review.", "Apr 8, 2025", "Operations"],
+  ["Player evaluation rubric", "Standard rubric for mid-season and end-of-season evals.", "Mar 18, 2025", "Player Dev"],
+  ["Parent communication guidelines", "Tone, cadence, and escalation paths for parent comms.", "Sep 4, 2024", "Operations"],
+  ["Captain leadership framework", "Boca's framework for player-led leadership.", "Sep 28, 2024", "Player Dev"],
+  ["Travel and tournament protocol", "Travel-day operations and tournament protocols.", "Oct 18, 2024", "Operations"],
+  ["Strength and lifting program", "Off-season and in-season strength program.", "Aug 22, 2024", "Conditioning"],
+  ["Mental performance handbook", "Pre-game routines, recovery practices, and visualization scripts.", "Nov 12, 2024", "Player Dev"],
+  ["Film study playbook", "How to run a guided film session.", "Nov 28, 2024", "Player Dev"],
+  ["Recruiting communication template", "Email and call templates for recruiting.", "Aug 4, 2024", "Operations"],
+  ["Off-season training plan", "Skill development and conditioning plan for the off-season.", "May 14, 2025", "Conditioning"],
+  ["Captain meeting agenda template", "Weekly captain meeting agenda template.", "Dec 4, 2024", "Operations"],
+  ["End-of-season debrief format", "Standard debrief format and prompt list.", "Apr 22, 2025", "Operations"],
+  ["Concussion protocol — quick reference", "Quick reference for in-game concussion protocol.", "Aug 30, 2024", "Operations"],
+  ["Hydration and nutrition guide", "Hydration and nutrition basics for athletes.", "Sep 12, 2024", "Conditioning"],
+  ["Officials communication guide", "How to communicate with officials in-game.", "Mar 22, 2025", "Operations"],
+  ["Set play install order", "Recommended order for installing set plays.", "Feb 24, 2025", "Set Plays"],
+  ["Defensive principles cheat sheet", "One-page summary of defensive principles.", "Feb 6, 2025", "Defense"],
+  ["Offensive principles cheat sheet", "One-page summary of offensive principles.", "Feb 7, 2025", "Offense"],
+  ["Practice plan template", "Standard practice plan template for the season.", "Aug 14, 2024", "Operations"],
+  ["Team rules and code of conduct", "Team rules and code of conduct.", "Aug 18, 2024", "Operations"],
+  ["Equipment checklist — full season", "Full-season equipment checklist.", "Jul 28, 2024", "Operations"],
+  ["Mid-season coaches check-in", "Mid-season coaches check-in framework.", "Jan 16, 2025", "Operations"],
+];
+
+const ORG_DOCS = ORG_DOCS_RAW.map((row, i) => ({
+  id: `org-d-${i + 1}`,
+  kind: "doc",
+  name: row[0],
+  description: row[1],
+  addedToOrg: row[2],
+  tag: row[3],
+}));
+
+// Pre-link doc bodies for the well-known seeded ones, by mapping to their id.
+// We give the first few ORG_DOCS the rich bodies above for variety.
+const DOC_BODY_MAP = {
+  "org-d-1": DOC_BODIES["org-3"],
+  "org-d-2": DOC_BODIES["org-5"],
+  "org-d-3": DOC_BODIES["org-7"],
+  "org-d-4": DOC_BODIES["org-9"],
+  "org-d-5": DOC_BODIES["org-12"],
+  "org-d-6": DOC_BODIES["org-13"],
+};
+
+// Which org items the coach has pre-added (so the prototype shows a mixed state).
+const PRE_ADDED_ORG_IDS = ["org-v-7", "scheme-2", "org-d-4"];
+
+window.SEED = {
+  ORG, COACH_OWN_ITEMS,
+  ORG_VIDEOS, ORG_SCHEMES, ORG_DOCS,
+  PRE_ADDED_ORG_IDS,
+  DOC_BODIES, DOC_BODY_MAP, DEFAULT_DOC_BODY,
+  TAGS,
+};
+
+</script>
+
+<script type="text/babel">
+// Tiny inline-SVG icon set. 1.5px stroke, currentColor.
+// Stays consistent with the screenshot vocabulary.
+
+const Ic = {
+  building: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 21V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v15" />
+      <path d="M16 9h2a2 2 0 0 1 2 2v10" />
+      <path d="M3 21h18" />
+      <path d="M8 7h2M8 11h2M8 15h2" />
+    </svg>
+  ),
+  org: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M3 9h18M9 3v18" />
+    </svg>
+  ),
+  home: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />
+    </svg>
+  ),
+  bars: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+    </svg>
+  ),
+  trend: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M14 7h7v7" />
+    </svg>
+  ),
+  upload: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M12 16V8M9 11l3-3 3 3" />
+    </svg>
+  ),
+  library: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 5h7v14H3zM14 5h7v14h-7z" />
+      <path d="M6 9h1M17 9h1" />
+    </svg>
+  ),
+  playbook: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 4l6 5-6 5V4zM13 9l8-5v16l-8-5" />
+    </svg>
+  ),
+  roster: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+      <path d="M17 11h4M19 9v4" />
+    </svg>
+  ),
+  org2: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 21V7l5-3 5 3v14M13 21V11l4-2 4 2v10M3 21h18" />
+      <path d="M6 11h2M6 15h2M16 14h1" />
+    </svg>
+  ),
+  play: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M7 5l12 7-12 7z" />
+    </svg>
+  ),
+  doc: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+      <path d="M14 3v5h5" />
+      <path d="M9 13h7M9 17h5" />
+    </svg>
+  ),
+  check: (p) => (
+    <svg width={p.size||12} height={p.size||12} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12l4 4 10-10" />
+    </svg>
+  ),
+  plus: (p) => (
+    <svg width={p.size||12} height={p.size||12} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  ),
+  minus: (p) => (
+    <svg width={p.size||12} height={p.size||12} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14" />
+    </svg>
+  ),
+  arrowLeft: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5M12 5l-7 7 7 7" />
+    </svg>
+  ),
+  swap: (p) => (
+    <svg width={p.size||12} height={p.size||12} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 7h12M16 4l3 3-3 3" />
+      <path d="M17 17H5M8 14l-3 3 3 3" />
+    </svg>
+  ),
+  info: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8h.01M11 12h1v5h1" />
+    </svg>
+  ),
+  warn: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v6M12 16h.01" />
+    </svg>
+  ),
+  field: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="1" />
+      <path d="M12 5v14M3 12h18" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  ),
+  eye: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  close: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  ),
+  ellipsis: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="5" cy="12" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="19" cy="12" r="1.6" />
+    </svg>
+  ),
+  inbox: (p) => (
+    <svg width={p.size||32} height={p.size||32} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 13l3-7h12l3 7v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
+      <path d="M3 13h5l1 2h6l1-2h5" />
+    </svg>
+  ),
+  search: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.35-4.35" />
+    </svg>
+  ),
+  grid: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  ),
+  list: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />
+    </svg>
+  ),
+};
+
+window.Ic = Ic;
+
+</script>
+
+<script type="text/babel">
+// Field diagram renderer for schemes/formations.
+// Renders x's, o's, ball, and arrows on a striped pitch placeholder.
+// Coords are 0-100 (x = horizontal across field, y = vertical).
+
+function FieldDiagram({ marks, ratio = "16 / 10", small = false }) {
+  // viewBox is 100 wide x 60 tall — slight letterbox feel
+  const VBW = 100, VBH = 60;
+  const ms = (marks || []).map((m) => ({
+    ...m,
+    // y is 0-100 in data; map into 0-60
+    cy: (m.y / 100) * VBH,
+    cy2: m.y2 != null ? (m.y2 / 100) * VBH : null,
+  }));
+
+  const r = small ? 2.6 : 3.0;
+  const stroke = small ? 0.7 : 0.8;
+
+  return (
+    <svg
+      viewBox={`0 0 ${VBW} ${VBH}`}
+      preserveAspectRatio="none"
+      style={{
+        width: "100%",
+        aspectRatio: ratio,
+        display: "block",
+        background: "#F4F8EA",
+        borderBottom: small ? "1px solid var(--border)" : "none",
+      }}
+    >
+      <defs>
+        <pattern id={`stripes-${small ? "s" : "l"}`} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(0)">
+          <rect width="6" height="6" fill="#F4F8EA" />
+          <rect x="0" width="3" height="6" fill="#EFF4DE" />
+        </pattern>
+        <marker id={`arrowHead-${small ? "s" : "l"}`} markerWidth="6" markerHeight="6" refX="4.5" refY="3" orient="auto">
+          <path d="M0,0 L5,3 L0,6 z" fill="var(--fg)" />
+        </marker>
+      </defs>
+
+      {/* Pitch */}
+      <rect x="0" y="0" width={VBW} height={VBH} fill={`url(#stripes-${small ? "s" : "l"})`} />
+      {/* Boundary */}
+      <rect x="1" y="1" width={VBW - 2} height={VBH - 2} fill="none" stroke="#A8B47A" strokeWidth={stroke} />
+      {/* Halfway line */}
+      <line x1={VBW / 2} y1="1" x2={VBW / 2} y2={VBH - 1} stroke="#A8B47A" strokeWidth={stroke} strokeDasharray="1.5 1.5" />
+      {/* Center spot */}
+      <circle cx={VBW / 2} cy={VBH / 2} r="1" fill="#A8B47A" />
+      {/* Goal areas */}
+      <rect x="1" y={VBH / 2 - 8} width="6" height="16" fill="none" stroke="#A8B47A" strokeWidth={stroke} />
+      <rect x={VBW - 7} y={VBH / 2 - 8} width="6" height="16" fill="none" stroke="#A8B47A" strokeWidth={stroke} />
+
+      {/* Arrows behind marks */}
+      {ms
+        .filter((m) => m.type === "arrow")
+        .map((m, i) => (
+          <line
+            key={`a${i}`}
+            x1={m.x}
+            y1={m.cy}
+            x2={m.x2}
+            y2={m.cy2}
+            stroke="var(--fg)"
+            strokeWidth={stroke * 0.9}
+            strokeDasharray="1.6 1.4"
+            markerEnd={`url(#arrowHead-${small ? "s" : "l"})`}
+            opacity="0.8"
+          />
+        ))}
+
+      {/* Marks */}
+      {ms.map((m, i) => {
+        if (m.type === "o") {
+          return (
+            <circle key={i} cx={m.x} cy={m.cy} r={r}
+              fill="#FFFFFF" stroke="var(--info-text)" strokeWidth={stroke * 1.4} />
+          );
+        }
+        if (m.type === "x") {
+          const d = r * 0.85;
+          return (
+            <g key={i} stroke="var(--error-text)" strokeWidth={stroke * 1.5} strokeLinecap="round">
+              <line x1={m.x - d} y1={m.cy - d} x2={m.x + d} y2={m.cy + d} />
+              <line x1={m.x + d} y1={m.cy - d} x2={m.x - d} y2={m.cy + d} />
+            </g>
+          );
+        }
+        if (m.type === "ball") {
+          return (
+            <circle key={i} cx={m.x} cy={m.cy} r={r * 0.55}
+              fill="#272520" stroke="#FFFFFF" strokeWidth={stroke * 0.6} />
+          );
+        }
+        return null;
+      })}
+    </svg>
+  );
+}
+
+window.FieldDiagram = FieldDiagram;
+
+</script>
+
+<script type="text/babel">
+// Sidebar + page chrome — matches the screenshots:
+// Boca / Volley team switcher, eyebrow-grouped nav, active item gets the brand pill.
+
+const { Ic } = window;
+
+const shellStyles = {
+  shell: {
+    display: "grid",
+    gridTemplateColumns: "248px minmax(0, 1fr)",
+    minHeight: "100vh",
+    background: "var(--bg)",
+  },
+  // ---- Sidebar
+  side: {
+    background: "#FFFFFF",
+    borderRight: "1px solid var(--border)",
+    display: "flex",
+    flexDirection: "column",
+    position: "sticky",
+    top: 0,
+    height: "100vh",
+  },
+  brand: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "18px 20px 14px",
+    borderBottom: "1px solid var(--border)",
+  },
+  brandMark: {
+    width: 22, height: 22, borderRadius: 5,
+    background: "var(--fg)",
+    color: "#fff",
+    display: "grid", placeItems: "center",
+    fontSize: 11, fontWeight: 500,
+    letterSpacing: "-0.02em",
+  },
+  brandWord: {
+    fontSize: 13, fontWeight: 500, letterSpacing: "0.04em",
+    color: "var(--muted)",
+  },
+  brandWordStrong: { color: "var(--fg)" },
+
+  navWrap: { padding: "8px 12px", flex: 1, overflow: "auto" },
+  eyebrow: {
+    fontSize: 10, fontWeight: 600,
+    letterSpacing: "0.08em", textTransform: "uppercase",
+    color: "var(--muted)",
+    padding: "12px 8px 6px",
+  },
+  navItem: {
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "8px 10px",
+    borderRadius: 6,
+    color: "var(--muted)",
+    fontSize: 13, fontWeight: 400,
+    cursor: "pointer",
+    border: "1px solid transparent",
+    position: "relative",
+    whiteSpace: "nowrap",
+  },
+  navItemActive: {
+    background: "var(--brand-bg)",
+    color: "var(--brand-text)",
+    borderColor: "var(--brand-border)",
+    fontWeight: 500,
+  },
+  navItemHover: {
+    background: "var(--surface)",
+    color: "var(--fg)",
+  },
+
+  teamSwitcher: {
+    margin: "8px 12px 0",
+    padding: "10px 12px",
+    borderLeft: "2px solid var(--fg)",
+    background: "var(--bg)",
+    borderRadius: "0 var(--r-md) var(--r-md) 0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    cursor: "pointer",
+  },
+  teamOrg: { fontSize: 11, color: "var(--muted)" },
+  teamName: { fontSize: 14, fontWeight: 500, color: "var(--fg)", marginTop: 1 },
+  teamSwitchLbl: {
+    display: "flex", alignItems: "center", gap: 4,
+    fontSize: 11, color: "var(--muted)",
+  },
+
+  footer: {
+    borderTop: "1px solid var(--border)",
+    padding: "14px 16px",
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+  },
+  avatar: {
+    width: 30, height: 30, borderRadius: 15,
+    background: "var(--fg)", color: "#fff",
+    display: "grid", placeItems: "center",
+    fontSize: 11, fontWeight: 500,
+  },
+  logout: {
+    fontSize: 12, color: "var(--muted)",
+    textDecoration: "underline", textUnderlineOffset: 3,
+    cursor: "pointer", background: "transparent", border: "none",
+    padding: 0,
+  },
+
+  // ---- Page main
+  main: { padding: "32px 40px 64px", maxWidth: 1180, width: "100%" },
+};
+
+function NavItem({ icon, label, active, onClick }) {
+  const [hover, setHover] = React.useState(false);
+  const style = {
+    ...shellStyles.navItem,
+    ...(active ? shellStyles.navItemActive : {}),
+    ...(!active && hover ? shellStyles.navItemHover : {}),
+  };
+  return (
+    <div style={style}
+         onClick={onClick}
+         onMouseEnter={() => setHover(true)}
+         onMouseLeave={() => setHover(false)}>
+      <span style={{ display: "inline-flex" }}>{icon}</span>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function Sidebar({ active, onNavigate }) {
+  return (
+    <aside style={shellStyles.side}>
+      <div style={shellStyles.brand}>
+        <div style={shellStyles.brandMark}>A</div>
+        <div style={shellStyles.brandWord}>
+          TEAM<span style={shellStyles.brandWordStrong}>PASS</span>
+        </div>
+      </div>
+
+      <div style={shellStyles.navWrap}>
+        <div style={shellStyles.eyebrow}>ADMIN</div>
+        <NavItem icon={<Ic.org2 />} label="Organizations" />
+
+        <div style={shellStyles.teamSwitcher}>
+          <div>
+            <div style={shellStyles.teamOrg}>Boca</div>
+            <div style={shellStyles.teamName}>Volley</div>
+          </div>
+          <div style={shellStyles.teamSwitchLbl}>
+            Switch <Ic.swap size={12} />
+          </div>
+        </div>
+
+        <div style={shellStyles.eyebrow}>ANALYTICS</div>
+        <NavItem icon={<Ic.home />} label="Home" />
+        <NavItem icon={<Ic.bars />} label="Reports" />
+        <NavItem icon={<Ic.trend />} label="Generate Reports" />
+
+        <div style={shellStyles.eyebrow}>MY TEAM</div>
+        <NavItem icon={<Ic.upload />} label="Upload Content" />
+        <NavItem
+          icon={<Ic.library />}
+          label="Content Library"
+          active={active === "library" || active === "org-library"}
+          onClick={() => onNavigate("library")}
+        />
+        <NavItem icon={<Ic.playbook />} label="Playbook" />
+        <NavItem icon={<Ic.roster />} label="Manage Roster" />
+        <NavItem icon={<Ic.org2 />} label="Organization" />
+      </div>
+
+      <div style={shellStyles.footer}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={shellStyles.avatar}>AD</div>
+        </div>
+        <button style={shellStyles.logout}>Log Out</button>
+      </div>
+    </aside>
+  );
+}
+
+function Shell({ active, onNavigate, children }) {
+  return (
+    <div style={shellStyles.shell}>
+      <Sidebar active={active} onNavigate={onNavigate} />
+      <main style={shellStyles.main}>{children}</main>
+    </div>
+  );
+}
+
+window.Shell = Shell;
+
+</script>
+
+<script type="text/babel">
+// Content Library — coach's personal library.
+// Shows their own uploads + any org items they've added (with org badge).
+// Hover an org-sourced row → reveal "Remove from my library" (error tokens).
+// Hover an own row → reveal an ellipsis menu placeholder.
+
+const { Ic } = window;
+
+const clStyles = {
+  // Page header
+  header: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 16,
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 24, fontWeight: 500, letterSpacing: "-0.01em",
+    color: "var(--fg)",
+  },
+  sub: { fontSize: 13, color: "var(--muted)", marginTop: 4 },
+  actions: { display: "flex", gap: 8, alignItems: "center" },
+
+  btnGhost: {
+    background: "transparent",
+    color: "var(--muted)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--r-md)",
+    padding: "8px 14px",
+    fontSize: 13,
+    fontWeight: 500,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+  },
+  btnPrimary: {
+    background: "var(--primary-bg)",
+    color: "var(--primary-text)",
+    border: "1px solid var(--primary-border)",
+    borderRadius: "var(--r-md)",
+    padding: "8px 14px",
+    fontSize: 13,
+    fontWeight: 500,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    boxShadow: "var(--shadow-sm)",
+  },
+
+  // Stats
+  stats: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 12,
+    marginBottom: 16,
+  },
+  statCard: {
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--r-lg)",
+    padding: "14px 16px",
+  },
+  statHead: {
+    display: "flex", alignItems: "center", gap: 6,
+    color: "var(--muted)",
+    fontSize: 10.5, fontWeight: 600,
+    letterSpacing: "0.04em", textTransform: "uppercase",
+    marginBottom: 8,
+    whiteSpace: "nowrap",
+  },
+  statRow: {
+    display: "flex", alignItems: "baseline", justifyContent: "space-between",
+  },
+  statVal: { fontSize: 26, fontWeight: 500, color: "var(--fg)" },
+  statSub: { fontSize: 11, color: "var(--muted)" },
+  dotG: {
+    width: 8, height: 8, borderRadius: 4,
+    background: "var(--brand-border)", display: "inline-block",
+  },
+  dotY: {
+    width: 8, height: 8, borderRadius: 4,
+    background: "#D9A40D", display: "inline-block",
+  },
+
+  // Banner
+  banner: {
+    background: "var(--warning-bg)",
+    border: "1px solid var(--warning-border)",
+    borderRadius: "var(--r-lg)",
+    padding: 16,
+    marginBottom: 20,
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+  },
+  bannerHead: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    gap: 12,
+  },
+  bannerTitle: {
+    display: "flex", alignItems: "center", gap: 8,
+    color: "var(--warning-text)",
+    fontSize: 14, fontWeight: 500,
+  },
+  bannerBody: {
+    color: "var(--warning-text)",
+    fontSize: 13, lineHeight: 1.5,
+    opacity: 0.9,
+  },
+  bannerDismiss: {
+    background: "transparent", border: "none",
+    color: "var(--warning-text)",
+    fontSize: 12,
+    textDecoration: "underline", textUnderlineOffset: 3,
+    opacity: 0.8,
+  },
+  bannerCta: {
+    background: "var(--primary-bg)", color: "var(--primary-text)",
+    border: "1px solid var(--primary-border)",
+    borderRadius: "var(--r-sm)",
+    padding: "6px 12px",
+    fontSize: 12, fontWeight: 500,
+    alignSelf: "flex-start",
+    whiteSpace: "nowrap",
+  },
+
+  // Tabs
+  tabsRow: {
+    display: "flex",
+    borderBottom: "1px solid var(--border)",
+    marginBottom: 16,
+    gap: 4,
+  },
+  tab: {
+    background: "transparent", border: "none",
+    padding: "10px 14px",
+    fontSize: 13, color: "var(--muted)",
+    borderBottom: "2px solid transparent",
+    marginBottom: -1,
+    display: "inline-flex", alignItems: "center", gap: 8,
+  },
+  tabActive: {
+    color: "var(--fg)", fontWeight: 500,
+    borderBottomColor: "var(--brand-border)",
+  },
+  tabCount: {
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: 999,
+    padding: "1px 7px",
+    fontSize: 11,
+    color: "var(--muted)",
+  },
+  tabCountActive: {
+    background: "var(--brand-bg)",
+    borderColor: "var(--brand-border)",
+    color: "var(--brand-text)",
+  },
+
+  // Empty
+  empty: {
+    background: "var(--card)",
+    border: "1px dashed var(--border)",
+    borderRadius: "var(--r-lg)",
+    padding: "48px 24px",
+    textAlign: "center",
+    color: "var(--muted)",
+  },
+  emptyTitle: { fontSize: 15, fontWeight: 500, color: "var(--fg)", marginBottom: 4 },
+};
+
+function StatCard({ label, value, sub, dot, icon }) {
+  return (
+    <div style={clStyles.statCard}>
+      <div style={clStyles.statHead}>
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div style={clStyles.statRow}>
+        <div style={clStyles.statVal}>{value}</div>
+        {sub && <div style={clStyles.statSub}>{sub}</div>}
+        {dot && <span style={dot === "g" ? clStyles.dotG : clStyles.dotY} />}
+      </div>
+    </div>
+  );
+}
+
+function Tabs({ tabs, active, onChange }) {
+  return (
+    <div style={clStyles.tabsRow}>
+      {tabs.map((t) => {
+        const isActive = t.id === active;
+        return (
+          <button
+            key={t.id}
+            style={{ ...clStyles.tab, ...(isActive ? clStyles.tabActive : {}) }}
+            onClick={() => onChange(t.id)}
+          >
+            {t.label}
+            {typeof t.count === "number" && (
+              <span style={{ ...clStyles.tabCount, ...(isActive ? clStyles.tabCountActive : {}) }}>
+                {t.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+window.StatCard = StatCard;
+window.Tabs = Tabs;
+window.clStyles = clStyles;
+
+</script>
+
+<script type="text/babel">
+// Org Library — full-page browse view, breadcrumb back to Content Library.
+// Hover a row → ellipsis hidden, "Add to my library" revealed.
+// Already-added rows show "Added" status (not a toggle).
+// Per PRD: no ellipsis menu for org content at all — only add/added.
+
+const { Ic } = window;
+
+const olStyles = {
+  // Top bar with breadcrumb + title
+  breadcrumb: {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    fontSize: 12, color: "var(--muted)",
+    background: "transparent", border: "none",
+    padding: "4px 0",
+    cursor: "pointer",
+    marginBottom: 4,
+  },
+  breadcrumbHover: { color: "var(--fg)" },
+
+  header: { marginBottom: 24 },
+  titleRow: {
+    display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+    marginBottom: 0,
+  },
+  title: {
+    fontSize: 24, fontWeight: 500, letterSpacing: "-0.01em",
+    color: "var(--fg)",
+    lineHeight: 1.2,
+    whiteSpace: "nowrap",
+  },
+  titleBadge: {
+    display: "inline-flex", alignItems: "center", gap: 5,
+    background: "var(--brand-bg)",
+    color: "var(--brand-text)",
+    border: "1px solid var(--brand-border)",
+    borderRadius: 999,
+    padding: "3px 10px",
+    fontSize: 12,
+    fontWeight: 500,
+    letterSpacing: 0,
+  },
+  sub: {
+    fontSize: 13, color: "var(--muted)", marginTop: 6,
+    maxWidth: 640,
+  },
+
+  // Hint strip
+  hint: {
+    display: "flex", alignItems: "center", gap: 8,
+    fontSize: 12, color: "var(--muted)",
+    padding: "0 4px 8px",
+  },
+};
+
+window.olStyles = olStyles;
+
+</script>
+
+<script type="text/babel">
+// Slide-over preview panel. Opened by clicking a row/card in the org library.
+// Renders the appropriate preview body for each content type and includes the
+// Add to my library / Added action inline. For documents, renders a long
+// scrollable mock document with realistic structure (headings, paragraphs,
+// lists, quotes) plus a page-count and word-count chip.
+
+const previewStyles = {
+  scrim: {
+    position: "fixed", inset: 0,
+    background: "#10100E66",
+    backdropFilter: "blur(2px)",
+    zIndex: 40,
+    opacity: 0,
+    transition: "opacity 180ms",
+    pointerEvents: "none",
+  },
+  scrimOpen: { opacity: 1, pointerEvents: "auto" },
+
+  panel: {
+    position: "fixed", top: 0, right: 0, bottom: 0,
+    background: "var(--card)",
+    borderLeft: "1px solid var(--border)",
+    boxShadow: "-12px 0 32px -8px #2725201F",
+    zIndex: 41,
+    transform: "translateX(100%)",
+    transition: "transform 240ms cubic-bezier(.2,.8,.2,1)",
+    display: "flex",
+    flexDirection: "column",
+  },
+  panelOpen: { transform: "translateX(0)" },
+  // Wider panel for documents so they read like a real document reader.
+  panelDoc: { width: "min(820px, 96vw)" },
+  panelMedia: { width: "min(560px, 92vw)" },
+
+  header: {
+    padding: "16px 20px",
+    borderBottom: "1px solid var(--border)",
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+    flexShrink: 0,
+  },
+  eyebrow: {
+    fontSize: 11, fontWeight: 600, color: "var(--muted)",
+    letterSpacing: "0.06em", textTransform: "uppercase",
+    display: "flex", alignItems: "center", gap: 8,
+    marginBottom: 6,
+  },
+  title: {
+    fontSize: 18, fontWeight: 500, color: "var(--fg)",
+    letterSpacing: "-0.01em", lineHeight: 1.3,
+  },
+  closeBtn: {
+    width: 32, height: 32, borderRadius: "var(--r-sm)",
+    border: "1px solid var(--border)", background: "var(--card)",
+    color: "var(--muted)",
+    display: "grid", placeItems: "center", cursor: "pointer",
+    flexShrink: 0,
+  },
+
+  body: {
+    padding: "18px 20px 20px",
+    overflowY: "auto",
+    flex: 1,
+  },
+
+  // Video preview
+  videoMedia: {
+    aspectRatio: "16 / 9",
+    background: "repeating-linear-gradient(135deg, #2725200A 0 8px, transparent 8px 16px), var(--info-bg)",
+    color: "var(--info-text)",
+    borderRadius: "var(--r-md)",
+    border: "1px solid var(--border)",
+    display: "grid", placeItems: "center",
+    position: "relative",
+    overflow: "hidden",
+    marginBottom: 16,
+  },
+  playBubble: {
+    width: 56, height: 56, borderRadius: 28,
+    background: "#FFFFFFE6",
+    display: "grid", placeItems: "center",
+    color: "var(--fg)",
+    boxShadow: "0 6px 18px -4px #00000033",
+  },
+  duration: {
+    position: "absolute",
+    right: 12, bottom: 12,
+    background: "#10100ECC", color: "#fff",
+    fontSize: 12, fontWeight: 500,
+    padding: "3px 8px", borderRadius: 4,
+  },
+
+  // Scheme preview
+  schemeMedia: {
+    borderRadius: "var(--r-md)",
+    overflow: "hidden",
+    border: "1px solid var(--border)",
+    marginBottom: 16,
+  },
+
+  // Document preview — toolbar + paged reader
+  docToolbar: {
+    display: "flex", alignItems: "center", gap: 10,
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--r-md) var(--r-md) 0 0",
+    borderBottom: "none",
+    padding: "8px 12px",
+    fontSize: 12, color: "var(--muted)",
+  },
+  docToolbarChip: {
+    display: "inline-flex", alignItems: "center", gap: 4,
+    padding: "2px 8px",
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: 999,
+    fontSize: 11, color: "var(--muted)",
+  },
+  docReader: {
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "0 0 var(--r-md) var(--r-md)",
+    padding: "20px 20px 28px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 18,
+    marginBottom: 16,
+  },
+  docPage: {
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--r-sm)",
+    padding: "32px 40px",
+    boxShadow: "0 1px 2px 0 #2725200F",
+    position: "relative",
+  },
+  docPageNum: {
+    position: "absolute",
+    bottom: 10, right: 14,
+    fontSize: 10, color: "var(--muted)",
+    fontVariantNumeric: "tabular-nums",
+    letterSpacing: "0.04em",
+  },
+  docHeading: {
+    fontSize: 22, fontWeight: 500, color: "var(--fg)",
+    letterSpacing: "-0.01em", lineHeight: 1.25,
+    marginBottom: 14,
+  },
+  docH2: {
+    fontSize: 16, fontWeight: 500, color: "var(--fg)",
+    marginTop: 18, marginBottom: 8,
+  },
+  docH3: {
+    fontSize: 13.5, fontWeight: 500, color: "var(--fg)",
+    marginTop: 14, marginBottom: 6,
+  },
+  docP: {
+    fontSize: 13.5, lineHeight: 1.65, color: "var(--fg)",
+    marginBottom: 10,
+  },
+  docList: {
+    fontSize: 13.5, lineHeight: 1.65, color: "var(--fg)",
+    marginLeft: 18, marginBottom: 10,
+  },
+  docQuote: {
+    borderLeft: "3px solid var(--brand-border)",
+    background: "var(--brand-bg)",
+    color: "var(--brand-text)",
+    padding: "10px 14px",
+    fontSize: 13.5, fontStyle: "italic",
+    lineHeight: 1.55,
+    margin: "12px 0",
+    borderRadius: "0 var(--r-sm) var(--r-sm) 0",
+  },
+  docDivider: {
+    height: 1, background: "var(--border)",
+    margin: "12px 0",
+  },
+  docFade: {
+    height: 64,
+    background: "linear-gradient(0deg, var(--surface) 0%, transparent 100%)",
+    marginTop: -56,
+    pointerEvents: "none",
+  },
+
+  // Common metadata + description
+  fieldKv: {
+    display: "grid",
+    gridTemplateColumns: "120px 1fr",
+    rowGap: 8,
+    columnGap: 16,
+    fontSize: 13,
+    marginBottom: 16,
+  },
+  fieldKey: { color: "var(--muted)" },
+  fieldVal: { color: "var(--fg)" },
+
+  description: {
+    fontSize: 14, lineHeight: 1.55, color: "var(--fg)",
+    marginBottom: 16,
+  },
+
+  actionBar: {
+    padding: "16px 20px",
+    borderTop: "1px solid var(--border)",
+    background: "var(--card)",
+    display: "flex",
+    gap: 10,
+    justifyContent: "flex-end",
+    flexShrink: 0,
+  },
+};
+
+// Distribute blocks across N pages so the reader shows multiple paged sheets.
+function paginateBlocks(blocks, pageCount) {
+  if (!blocks.length) return [];
+  // We don't have real pagination; just split blocks evenly into N pages.
+  const pages = [];
+  const target = Math.ceil(blocks.length / Math.max(1, pageCount));
+  for (let i = 0; i < pageCount; i++) {
+    const slice = blocks.slice(i * target, (i + 1) * target);
+    if (slice.length) pages.push(slice);
+  }
+  // If we ran out of blocks before reaching pageCount, just return what we have.
+  return pages;
+}
+
+function renderBlock(block, idx) {
+  switch (block.type) {
+    case "heading": return <div key={idx} style={previewStyles.docHeading}>{block.text}</div>;
+    case "h2":      return <div key={idx} style={previewStyles.docH2}>{block.text}</div>;
+    case "h3":      return <div key={idx} style={previewStyles.docH3}>{block.text}</div>;
+    case "p":       return <p key={idx} style={previewStyles.docP}>{block.text}</p>;
+    case "list":    return (
+      <ul key={idx} style={previewStyles.docList}>
+        {block.items.map((it, j) => <li key={j} style={{ marginBottom: 4 }}>{it}</li>)}
+      </ul>
+    );
+    case "quote":   return <div key={idx} style={previewStyles.docQuote}>{block.text}</div>;
+    case "divider": return <div key={idx} style={previewStyles.docDivider} />;
+    default:        return null;
+  }
+}
+
+function DocReader({ body }) {
+  // Take pageCount from body; pad blocks across pages.
+  const pages = paginateBlocks(body.blocks, body.pageCount || 1);
+  return (
+    <React.Fragment>
+      <div style={previewStyles.docToolbar}>
+        <span style={previewStyles.docToolbarChip}>
+          <Ic.doc size={11} /> {body.fileType || "PDF"}
+        </span>
+        <span style={previewStyles.docToolbarChip}>
+          {body.pageCount} pages
+        </span>
+        <span style={previewStyles.docToolbarChip}>
+          ~{body.wordCount.toLocaleString()} words
+        </span>
+        {body.fileSize && (
+          <span style={{ ...previewStyles.docToolbarChip, marginLeft: "auto" }}>
+            {body.fileSize}
+          </span>
+        )}
+      </div>
+      <div style={previewStyles.docReader}>
+        {pages.map((blocks, i) => (
+          <div key={i} style={previewStyles.docPage}>
+            {blocks.map(renderBlock)}
+            <div style={previewStyles.docPageNum}>{i + 1} / {body.pageCount}</div>
+          </div>
+        ))}
+      </div>
+    </React.Fragment>
+  );
+}
+
+function PreviewPanel({ item, isAdded, onClose, onAdd }) {
+  const open = !!item;
+
+  React.useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  const kindLabel = item ? (
+    item.kind === "video" ? "Video" :
+    item.kind === "scheme" ? "Scheme / Formation" :
+    "Document"
+  ) : "";
+
+  const isDoc = item && item.kind === "doc";
+  const docBody = isDoc
+    ? (window.SEED.DOC_BODY_MAP[item.id] || window.SEED.DEFAULT_DOC_BODY)
+    : null;
+
+  return (
+    <React.Fragment>
+      <div
+        style={{ ...previewStyles.scrim, ...(open ? previewStyles.scrimOpen : {}) }}
+        onClick={onClose}
+      />
+      <aside
+        style={{
+          ...previewStyles.panel,
+          ...(isDoc ? previewStyles.panelDoc : previewStyles.panelMedia),
+          ...(open ? previewStyles.panelOpen : {}),
+        }}
+        aria-hidden={!open}
+      >
+        {item && (
+          <React.Fragment>
+            <div style={previewStyles.header}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={previewStyles.eyebrow}>
+                  <Ic.eye size={12} /> Preview · {kindLabel}
+                </div>
+                <div style={previewStyles.title}>{item.name}</div>
+              </div>
+              <button style={previewStyles.closeBtn} onClick={onClose} aria-label="Close preview">
+                <Ic.close size={14} />
+              </button>
+            </div>
+
+            <div style={previewStyles.body}>
+              {item.kind === "video" && (
+                <div style={previewStyles.videoMedia}>
+                  <div style={previewStyles.playBubble}><Ic.play size={20} /></div>
+                  {item.duration && <div style={previewStyles.duration}>{item.duration}</div>}
+                </div>
+              )}
+              {item.kind === "scheme" && (
+                <div style={previewStyles.schemeMedia}>
+                  <FieldDiagram marks={item.marks} ratio="16 / 9" />
+                </div>
+              )}
+              {isDoc && <DocReader body={docBody} />}
+
+              <div style={previewStyles.description}>{item.description}</div>
+
+              <div style={previewStyles.fieldKv}>
+                <div style={previewStyles.fieldKey}>Type</div>
+                <div style={previewStyles.fieldVal}>{kindLabel}</div>
+                {item.duration && (
+                  <React.Fragment>
+                    <div style={previewStyles.fieldKey}>Duration</div>
+                    <div style={previewStyles.fieldVal}>{item.duration}</div>
+                  </React.Fragment>
+                )}
+                {isDoc && (
+                  <React.Fragment>
+                    <div style={previewStyles.fieldKey}>Pages</div>
+                    <div style={previewStyles.fieldVal}>
+                      {docBody.pageCount} · ~{docBody.wordCount.toLocaleString()} words
+                    </div>
+                    <div style={previewStyles.fieldKey}>File</div>
+                    <div style={previewStyles.fieldVal}>
+                      {docBody.fileType}{docBody.fileSize ? ` · ${docBody.fileSize}` : ""}
+                    </div>
+                  </React.Fragment>
+                )}
+                {item.tag && (
+                  <React.Fragment>
+                    <div style={previewStyles.fieldKey}>Topic</div>
+                    <div style={previewStyles.fieldVal}>{item.tag}</div>
+                  </React.Fragment>
+                )}
+                <div style={previewStyles.fieldKey}>Source</div>
+                <div style={previewStyles.fieldVal}>{window.SEED.ORG.name} Org Library</div>
+                <div style={previewStyles.fieldKey}>Added</div>
+                <div style={previewStyles.fieldVal}>{item.addedToOrg}</div>
+                <div style={previewStyles.fieldKey}>Permissions</div>
+                <div style={previewStyles.fieldVal}>Read-only · provided by your org</div>
+              </div>
+            </div>
+
+            <div style={previewStyles.actionBar}>
+              <button
+                className="btn-ghost-h"
+                style={{
+                  background: "transparent",
+                  color: "var(--muted)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--r-md)",
+                  padding: "8px 14px",
+                  fontSize: 13, fontWeight: 500,
+                }}
+                onClick={onClose}
+              >
+                Close
+              </button>
+              {isAdded ? (
+                <button
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    background: "var(--success-bg)",
+                    color: "var(--success-text)",
+                    border: "1px solid var(--success-border)",
+                    borderRadius: "var(--r-md)",
+                    padding: "8px 14px",
+                    fontSize: 13, fontWeight: 500,
+                    cursor: "default",
+                  }}
+                >
+                  <Ic.check size={12} /> Added to your library
+                </button>
+              ) : (
+                <button
+                  className="btn-primary-h"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    background: "var(--primary-bg)",
+                    color: "var(--primary-text)",
+                    border: "1px solid var(--primary-border)",
+                    borderRadius: "var(--r-md)",
+                    padding: "8px 14px",
+                    fontSize: 13, fontWeight: 500,
+                    boxShadow: "var(--shadow-sm)",
+                  }}
+                  onClick={() => onAdd(item.id)}
+                >
+                  <Ic.plus size={11} /> Add to my library
+                </button>
+              )}
+            </div>
+          </React.Fragment>
+        )}
+      </aside>
+    </React.Fragment>
+  );
+}
+
+window.PreviewPanel = PreviewPanel;
+
+</script>
+
+<script type="text/babel">
+// App entry — handles routing between Content Library, Org Library, and Browse All.
+// add/remove state, preview panel, and renders all content affordances.
+
+const { Ic, Shell, StatCard, Tabs, clStyles, olStyles, FieldDiagram, PreviewPanel } = window;
+const { ORG, COACH_OWN_ITEMS, ORG_VIDEOS, ORG_DOCS, ORG_SCHEMES, PRE_ADDED_ORG_IDS, TAGS } = window.SEED;
+
+// Combined list of all org-library content (videos, docs, schemes).
+const ALL_ORG_CONTENT = [...ORG_VIDEOS, ...ORG_DOCS, ...ORG_SCHEMES];
+function findOrgItem(id) { return ALL_ORG_CONTENT.find((i) => i.id === id); }
+
+// ---------------------------------------------------------------------------
+// CSS — hover states, transitions, button hover, browse all page.
+// ---------------------------------------------------------------------------
+
+const HOVER_CSS = `
+.cr {
+  position: relative; display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  transition: border-color 120ms, background 120ms, box-shadow 220ms;
+  cursor: pointer;
+}
+.cr:hover { border-color: var(--border-hover); background: #FCFCFB; }
+.cr.pulse { box-shadow: 0 0 0 3px rgba(110,157,16,0.18); border-color: var(--brand-border); }
+
+.cr .hover-action { opacity: 0; pointer-events: none; transition: opacity 120ms; }
+.cr:hover .hover-action { opacity: 1; pointer-events: auto; }
+.cr .rest-action { opacity: 1; transition: opacity 120ms; }
+.cr:hover .rest-action { opacity: 0; pointer-events: none; }
+
+.vc {
+  position: relative; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  overflow: hidden; transition: border-color 140ms, transform 220ms, box-shadow 220ms;
+  display: flex; flex-direction: column; cursor: pointer;
+}
+.vc:hover {
+  border-color: var(--border-hover); transform: translateY(-2px);
+  box-shadow: 0 6px 18px -10px #27252026, 0 2px 4px -2px #27252014;
+}
+.vc.pulse { box-shadow: 0 0 0 3px rgba(110,157,16,0.22); border-color: var(--brand-border); }
+.vc .play-overlay {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: linear-gradient(180deg, transparent 40%, #00000055 100%);
+  opacity: 0; transition: opacity 160ms;
+}
+.vc:hover .play-overlay { opacity: 1; }
+.vc .play-bubble {
+  width: 48px; height: 48px; border-radius: 24px;
+  background: #FFFFFFE6; display: grid; place-items: center;
+  color: var(--fg); box-shadow: 0 4px 12px -4px #00000033;
+  transform: translateY(4px); transition: transform 160ms;
+}
+.vc:hover .play-bubble { transform: translateY(0); }
+
+.carousel-track {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 280px;
+  gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory;
+  scroll-behavior: smooth; padding: 4px 2px 14px; scrollbar-width: thin;
+}
+.carousel-track > * { scroll-snap-align: start; }
+.carousel-track::-webkit-scrollbar { height: 8px; }
+.carousel-track::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Add / Added / Remove button hover states */
+.btn-add { background: var(--card); color: var(--fg); border: 1px solid var(--border);
+  transition: background 120ms, border-color 120ms, box-shadow 120ms, transform 100ms; }
+.btn-add:hover { background: var(--fg); color: #FFFFFF; border-color: var(--primary-border);
+  box-shadow: 0 2px 6px -2px #2725204D; }
+.btn-add:active { transform: translateY(1px); }
+
+.btn-added { background: var(--success-bg); color: var(--success-text);
+  border: 1px solid var(--success-border); cursor: default;
+  transition: background 120ms; }
+.btn-added:hover { background: #BFF0D6; }
+
+.btn-remove { background: var(--error-bg); color: var(--error-text);
+  border: 1px solid var(--error-border);
+  transition: background 120ms, border-color 120ms; }
+.btn-remove:hover { background: #FBE5E5; border-color: #F1A6A6; }
+
+.btn-primary-h { transition: background 120ms, box-shadow 120ms, transform 100ms; }
+.btn-primary-h:hover { background: #10100E; box-shadow: 0 4px 12px -3px #27252066; }
+.btn-primary-h:active { transform: translateY(1px); }
+
+.btn-ghost-h { transition: background 120ms, color 120ms, border-color 120ms; }
+.btn-ghost-h:hover { background: var(--surface); color: var(--fg); border-color: var(--border-hover); }
+
+/* Browse All search input */
+.browse-search:focus { outline: none; border-color: var(--border-hover); box-shadow: 0 0 0 3px rgba(110,157,16,0.1); }
+
+/* Type filter chip hover */
+.type-chip:hover { border-color: var(--border-hover) !important; }
+.type-chip.active:hover { border-color: var(--brand-border) !important; }
+`;
+
+(function injectHoverCss() {
+  if (!document.getElementById("__cr_hover_css")) {
+    const s = document.createElement("style");
+    s.id = "__cr_hover_css";
+    s.textContent = HOVER_CSS;
+    document.head.appendChild(s);
+  }
+})();
+
+// ---------------------------------------------------------------------------
+// Common style fragments used by buttons (className handles hover state).
+// ---------------------------------------------------------------------------
+
+const btnBase = {
+  display: "inline-flex", alignItems: "center", gap: 5,
+  fontSize: 12, fontWeight: 500,
+  padding: "6px 12px",
+  borderRadius: "var(--r-sm)",
+  whiteSpace: "nowrap",
+  boxShadow: "var(--shadow-sm)",
+};
+const orgBadgeStyle = {
+  display: "inline-flex", alignItems: "center", gap: 4,
+  background: "var(--brand-bg)", color: "var(--brand-text)",
+  border: "1px solid var(--brand-border)",
+  borderRadius: "var(--r-sm)",
+  padding: "1px 6px 1px 5px",
+  fontSize: 11, fontWeight: 500,
+  whiteSpace: "nowrap",
+};
+
+// ---------------------------------------------------------------------------
+// Row component — used for documents and Browse All list items.
+//   mode: "own" | "org-source" | "org-added"
+// ---------------------------------------------------------------------------
+
+const rowStyles = {
+  iconWrap: {
+    width: 40, height: 40, borderRadius: "var(--r-md)",
+    display: "grid", placeItems: "center", flexShrink: 0,
+  },
+  iconVideo: { background: "var(--info-bg)", color: "var(--info-text)" },
+  iconDoc: { background: "#ECFDF5", color: "var(--success-text)" },
+  iconScheme: { background: "#F4F8EA", color: "var(--brand-text)" },
+  info: { flex: 1, minWidth: 0 },
+  nameLine: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" },
+  name: { fontSize: 13.5, fontWeight: 500, color: "var(--fg)" },
+  meta: { fontSize: 11.5, color: "var(--muted)", marginTop: 3 },
+  actionSlot: {
+    position: "relative", flexShrink: 0,
+    minWidth: 192, height: 30,
+    display: "flex", alignItems: "center", justifyContent: "flex-end",
+  },
+  actionItem: {
+    position: "absolute", right: 0, top: 0, bottom: 0,
+    display: "inline-flex", alignItems: "center",
+  },
+  ellipsis: {
+    width: 30, height: 30,
+    border: "1px solid var(--border)", background: "var(--card)",
+    borderRadius: "var(--r-sm)",
+    display: "grid", placeItems: "center",
+    color: "var(--muted)", cursor: "pointer",
+  },
+};
+
+function buildMeta(item, mode) {
+  const kind = item.kind === "video" ? "Video" : item.kind === "scheme" ? "Scheme" : "Document";
+  const dur = item.duration ? ` · ${item.duration}` : "";
+  if (mode === "org-source") return `${kind}${dur} · Added ${item.addedToOrg}`;
+  if (mode === "org-added")  return `${kind}${dur} · From org library · Not yet published`;
+  return item.meta;
+}
+
+function ContentRow({ item, mode, isAdded, justChanged, onAdd, onRemove, onPreview }) {
+  const isVideo  = item.kind === "video";
+  const isScheme = item.kind === "scheme";
+  // Show org badge in the personal library where provenance matters.
+  // In the org library itself (org-source) the context strip makes it clear.
+  const showOrgBadge = mode === "org-added";
+
+  let restAction = null;
+  let hoverAction = null;
+
+  if (mode === "own") {
+    restAction = (
+      <button style={{ ...rowStyles.ellipsis, opacity: 0.6 }} aria-label="More actions"
+        onClick={(e) => e.stopPropagation()}>
+        <Ic.ellipsis />
+      </button>
+    );
+    hoverAction = (
+      <button style={rowStyles.ellipsis} aria-label="More actions"
+        onClick={(e) => e.stopPropagation()}>
+        <Ic.ellipsis />
+      </button>
+    );
+  } else if (mode === "org-source") {
+    if (isAdded) {
+      const btn = (
+        <button className="btn-added" style={btnBase} aria-label="Already added"
+          onClick={(e) => e.stopPropagation()}>
+          <Ic.check size={11} /> Added
+        </button>
+      );
+      restAction = btn; hoverAction = btn;
+    } else {
+      hoverAction = (
+        <button className="btn-add" style={btnBase}
+          onClick={(e) => { e.stopPropagation(); onAdd(item.id); }}>
+          <Ic.plus size={11} /> Add to my library
+        </button>
+      );
+    }
+  } else if (mode === "org-added") {
+    hoverAction = (
+      <button className="btn-remove" style={btnBase}
+        onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}>
+        <Ic.minus size={11} /> Remove from my library
+      </button>
+    );
+  }
+
+  const persistent = mode === "org-source" && isAdded;
+  const clickable = mode === "org-source" || mode === "org-added";
+
+  return (
+    <div
+      className={`cr${justChanged ? " pulse" : ""}`}
+      onClick={() => clickable && onPreview && onPreview(item)}
+      style={{ cursor: clickable ? "pointer" : "default" }}
+    >
+      <div style={{
+        ...rowStyles.iconWrap,
+        ...(isVideo ? rowStyles.iconVideo : isScheme ? rowStyles.iconScheme : rowStyles.iconDoc),
+      }}>
+        {isVideo ? <Ic.play size={16} /> : isScheme ? <Ic.field size={16} /> : <Ic.doc size={16} />}
+      </div>
+
+      <div style={rowStyles.info}>
+        <div style={rowStyles.nameLine}>
+          <span style={rowStyles.name}>{item.name}</span>
+          {showOrgBadge && (
+            <span style={orgBadgeStyle}>
+              <Ic.building size={11} /> {ORG.name}
+            </span>
+          )}
+        </div>
+        <div style={rowStyles.meta}>{buildMeta(item, mode)}</div>
+      </div>
+
+      <div style={rowStyles.actionSlot}>
+        {persistent ? (
+          <div style={rowStyles.actionItem}>{restAction}</div>
+        ) : (
+          <React.Fragment>
+            {restAction && (
+              <div className="rest-action" style={rowStyles.actionItem}>{restAction}</div>
+            )}
+            {hoverAction && (
+              <div className="hover-action" style={rowStyles.actionItem}>{hoverAction}</div>
+            )}
+          </React.Fragment>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Video / Scheme card — hero treatment with thumbnail + duration chip.
+// ---------------------------------------------------------------------------
+
+const videoStyles = {
+  thumb: {
+    aspectRatio: "16 / 10",
+    background:
+      "repeating-linear-gradient(135deg, #2725200A 0 8px, transparent 8px 16px), var(--info-bg)",
+    color: "var(--info-text)",
+    position: "relative", display: "grid", placeItems: "center",
+    borderBottom: "1px solid var(--border)",
+  },
+  thumbInner: {
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+    fontSize: 11, color: "var(--info-text)",
+    opacity: 0.55, letterSpacing: "0.04em", textTransform: "uppercase",
+  },
+  duration: {
+    position: "absolute", right: 10, bottom: 10,
+    background: "#10100ECC", color: "#FFFFFF",
+    fontSize: 11, fontWeight: 500,
+    padding: "2px 6px", borderRadius: 4,
+    fontVariantNumeric: "tabular-nums",
+  },
+  body: {
+    padding: "12px 14px 14px",
+    display: "flex", flexDirection: "column", gap: 6, flex: 1,
+  },
+  title: {
+    fontSize: 14, fontWeight: 500, color: "var(--fg)", lineHeight: 1.35,
+    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+    overflow: "hidden", minHeight: 38,
+  },
+  desc: {
+    fontSize: 12, color: "var(--muted)", lineHeight: 1.45,
+    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+    overflow: "hidden", minHeight: 32,
+  },
+  metaRow: { fontSize: 11, color: "var(--muted)", marginTop: 2 },
+  actionRow: { marginTop: 8, display: "flex" },
+  fullBtn: { width: "100%", justifyContent: "center", boxShadow: "none" },
+};
+
+function MediaCard({ item, isAdded, justChanged, onAdd, onPreview, mediaSlot }) {
+  return (
+    <div className={`vc${justChanged ? " pulse" : ""}`} onClick={() => onPreview(item)}>
+      {mediaSlot}
+      <div style={videoStyles.body}>
+        <div style={videoStyles.title}>{item.name}</div>
+        <div style={videoStyles.desc}>{item.description}</div>
+        <div style={videoStyles.metaRow}>Added {item.addedToOrg}</div>
+        <div style={videoStyles.actionRow}>
+          {isAdded ? (
+            <button className="btn-added" style={{ ...btnBase, ...videoStyles.fullBtn }}
+              onClick={(e) => e.stopPropagation()}>
+              <Ic.check size={11} /> Added to my library
+            </button>
+          ) : (
+            <button className="btn-add" style={{ ...btnBase, ...videoStyles.fullBtn }}
+              onClick={(e) => { e.stopPropagation(); onAdd(item.id); }}>
+              <Ic.plus size={11} /> Add to my library
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VideoCard(props) {
+  const { item } = props;
+  return (
+    <MediaCard {...props} mediaSlot={
+      <div style={videoStyles.thumb}>
+        <div style={videoStyles.thumbInner}>video thumbnail</div>
+        {item.duration && <div style={videoStyles.duration}>{item.duration}</div>}
+        <div className="play-overlay">
+          <div className="play-bubble"><Ic.play size={18} /></div>
+        </div>
+      </div>
+    } />
+  );
+}
+
+function SchemeCard(props) {
+  const { item } = props;
+  return (
+    <MediaCard {...props} mediaSlot={
+      <div style={{ borderBottom: "1px solid var(--border)" }}>
+        <FieldDiagram marks={item.marks} ratio="16 / 10" />
+      </div>
+    } />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Carousel — horizontal scrolling card track with prev/next arrows + View all.
+// ---------------------------------------------------------------------------
+
+const carouselStyles = {
+  controlsRow: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 11, fontWeight: 600, color: "var(--muted)",
+    letterSpacing: "0.06em", textTransform: "uppercase",
+    display: "flex", alignItems: "center", gap: 8,
+  },
+  count: {
+    background: "var(--surface)", border: "1px solid var(--border)",
+    borderRadius: 999, padding: "1px 7px",
+    fontSize: 11, fontWeight: 500, color: "var(--muted)",
+    letterSpacing: 0, textTransform: "none",
+  },
+  rightControls: { display: "flex", alignItems: "center", gap: 8 },
+  viewAll: {
+    fontSize: 12, color: "var(--muted)",
+    background: "transparent", border: "none",
+    cursor: "pointer", padding: "2px 4px",
+    display: "inline-flex", alignItems: "center", gap: 4,
+    textDecoration: "underline", textUnderlineOffset: 3,
+    transition: "color 120ms",
+  },
+  arrows: { display: "flex", gap: 6 },
+  arrow: {
+    width: 30, height: 30,
+    border: "1px solid var(--border)", background: "var(--card)",
+    borderRadius: "var(--r-sm)",
+    display: "grid", placeItems: "center",
+    color: "var(--muted)", cursor: "pointer",
+  },
+  arrowDisabled: { opacity: 0.4, cursor: "not-allowed" },
+};
+
+function Carousel({ title, items, addedIds, justChangedId, onAdd, onPreview, CardComp, onViewAll }) {
+  const trackRef = React.useRef(null);
+  const [canPrev, setCanPrev] = React.useState(false);
+  const [canNext, setCanNext] = React.useState(true);
+
+  const update = React.useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    setCanPrev(el.scrollLeft > 4);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  React.useEffect(() => {
+    update();
+    const el = trackRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [update, items.length]);
+
+  function nudge(dir) {
+    const el = trackRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * (el.clientWidth * 0.85), behavior: "smooth" });
+  }
+
+  return (
+    <div>
+      <div style={carouselStyles.controlsRow}>
+        <div style={carouselStyles.sectionTitle}>
+          {title} <span style={carouselStyles.count}>{items.length}</span>
+        </div>
+        <div style={carouselStyles.rightControls}>
+          {onViewAll && (
+            <button style={carouselStyles.viewAll} onClick={onViewAll}>
+              View all
+            </button>
+          )}
+          <div style={carouselStyles.arrows}>
+            <button className="btn-ghost-h"
+              style={{ ...carouselStyles.arrow, ...(canPrev ? {} : carouselStyles.arrowDisabled) }}
+              onClick={() => nudge(-1)} disabled={!canPrev} aria-label="Previous">
+              <Ic.arrowLeft size={14} />
+            </button>
+            <button className="btn-ghost-h"
+              style={{ ...carouselStyles.arrow, ...(canNext ? {} : carouselStyles.arrowDisabled) }}
+              onClick={() => nudge(1)} disabled={!canNext} aria-label="Next">
+              <span style={{ display: "inline-flex", transform: "scaleX(-1)" }}>
+                <Ic.arrowLeft size={14} />
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div ref={trackRef} className="carousel-track">
+        {items.map((item) => (
+          <CardComp
+            key={item.id}
+            item={item}
+            isAdded={addedIds.includes(item.id)}
+            justChanged={item.id === justChangedId}
+            onAdd={onAdd}
+            onPreview={onPreview}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===========================================================================
+// Page: Content Library
+// ===========================================================================
+
+function ContentLibraryPage({ ownItems, addedOrgItems, onNavigateOrg, justChangedId, onRemove, onPreview }) {
+  const [tab, setTab] = React.useState("docs");
+  const [bannerOpen, setBannerOpen] = React.useState(true);
+
+  const docs = [
+    ...ownItems.filter((i) => i.kind === "doc"),
+    ...addedOrgItems.filter((i) => i.kind === "doc" || i.kind === "scheme"),
+  ];
+  const videos = [
+    ...ownItems.filter((i) => i.kind === "video"),
+    ...addedOrgItems.filter((i) => i.kind === "video"),
+  ];
+
+  const totalDocs = docs.length;
+  const totalVideos = videos.length;
+  const unpublished = ownItems.filter((i) => !i.published).length + addedOrgItems.length;
+  const published = ownItems.filter((i) => i.published).length;
+
+  const list = tab === "docs" ? docs : videos;
+
+  return (
+    <div>
+      <div style={clStyles.header}>
+        <div>
+          <div style={clStyles.title}>Content Library</div>
+          <div style={clStyles.sub}>
+            Your central hub for managing, editing, and publishing team content.
+          </div>
+        </div>
+        <div style={clStyles.actions}>
+          <button className="btn-ghost-h" style={clStyles.btnGhost} onClick={onNavigateOrg}>
+            <Ic.building size={13} /> Browse Org Library
+          </button>
+          <button className="btn-primary-h" style={clStyles.btnPrimary}>
+            <Ic.plus size={11} /> Upload New
+          </button>
+        </div>
+      </div>
+
+      <div style={clStyles.stats}>
+        <StatCard label="Total documents" value={totalDocs} sub={`${totalDocs * 0} views`} icon={<Ic.doc size={13} />} />
+        <StatCard label="Drill videos" value={totalVideos} sub={`${totalVideos * 0} views`} icon={<Ic.play size={12} />} />
+        <StatCard label="Published" value={published} dot="g" icon={<Ic.check size={11} />} />
+        <StatCard label="Unpublished" value={unpublished} dot="y" icon={<Ic.warn size={12} />} />
+      </div>
+
+      {bannerOpen && unpublished > 0 && (
+        <div style={clStyles.banner}>
+          <div style={clStyles.bannerHead}>
+            <div style={clStyles.bannerTitle}>
+              <Ic.warn size={14} /> {`${unpublished} unpublished item${unpublished === 1 ? "" : "s"}`}
+            </div>
+            <button style={clStyles.bannerDismiss} onClick={() => setBannerOpen(false)}>
+              Dismiss
+            </button>
+          </div>
+          <div style={clStyles.bannerBody}>
+            You have content that's ready for review but not published yet. Review metadata
+            and publish to make it visible to your team.
+          </div>
+          <button className="btn-primary-h" style={clStyles.bannerCta}>
+            Review unpublished content
+          </button>
+        </div>
+      )}
+
+      <Tabs
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: "docs", label: "All Documents", count: totalDocs },
+          { id: "videos", label: "All Videos", count: totalVideos },
+        ]}
+      />
+
+      {list.length === 0 ? (
+        <div style={clStyles.empty}>
+          <div style={{ display: "grid", placeItems: "center", marginBottom: 12, color: "var(--border-hover)" }}>
+            <Ic.inbox size={36} />
+          </div>
+          <div style={clStyles.emptyTitle}>No {tab === "docs" ? "documents" : "videos"} yet</div>
+          <div style={{ fontSize: 13 }}>
+            Upload your own, or browse the {ORG.name} Org Library for approved materials.
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {list.map((item) => {
+            const isOrg = item.id.startsWith("org-") || item.id.startsWith("scheme-");
+            return (
+              <ContentRow
+                key={item.id}
+                item={item}
+                mode={isOrg ? "org-added" : "own"}
+                justChanged={item.id === justChangedId}
+                onRemove={onRemove}
+                onPreview={onPreview}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===========================================================================
+// Page: Org Library
+// — page-level context strip telegraphs "you're in Boca's library"
+// — videos carousel, schemes carousel, documents list (per-row badges removed)
+// ===========================================================================
+
+const orgPageStyles = {
+  contextStrip: {
+    background: "linear-gradient(0deg, var(--brand-bg) 0%, #EAFCB5 100%)",
+    border: "1px solid var(--brand-border)",
+    borderRadius: "var(--r-lg)",
+    padding: "14px 18px",
+    display: "flex", alignItems: "center", gap: 14,
+    marginBottom: 24,
+  },
+  contextIcon: {
+    width: 38, height: 38, borderRadius: "var(--r-md)",
+    background: "#FFFFFF99",
+    border: "1px solid var(--brand-border)",
+    display: "grid", placeItems: "center",
+    color: "var(--brand-text)",
+    flexShrink: 0,
+  },
+  contextText: { flex: 1, color: "var(--brand-text)" },
+  contextTitle: { fontSize: 14, fontWeight: 500 },
+  contextSub: { fontSize: 12, opacity: 0.85, marginTop: 2 },
+  countPill: {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    background: "#FFFFFFCC", border: "1px solid var(--brand-border)",
+    borderRadius: 999,
+    padding: "4px 10px",
+    fontSize: 12, fontWeight: 500,
+    color: "var(--brand-text)",
+    whiteSpace: "nowrap",
+  },
+  sectionGap: { marginBottom: 32 },
+  docsHeader: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  docsLeft: {
+    fontSize: 11, fontWeight: 600, color: "var(--muted)",
+    letterSpacing: "0.06em", textTransform: "uppercase",
+    display: "flex", alignItems: "center", gap: 8,
+  },
+  count: {
+    background: "var(--surface)", border: "1px solid var(--border)",
+    borderRadius: 999, padding: "1px 7px",
+    fontSize: 11, fontWeight: 500, color: "var(--muted)",
+    letterSpacing: 0, textTransform: "none",
+  },
+};
+
+function OrgLibraryPage({ videos, docs, schemes, addedIds, onBack, onAdd, onPreview, justChangedId, onViewAll }) {
+  const total = videos.length + schemes.length + docs.length;
+
+  return (
+    <div>
+      <button className="btn-ghost-h" style={olStyles.breadcrumb} onClick={onBack}>
+        <Ic.arrowLeft size={13} /> Content Library
+      </button>
+
+      <div style={olStyles.header}>
+        <div style={olStyles.titleRow}>
+          <div style={olStyles.title}>Org Library</div>
+        </div>
+        <div style={olStyles.sub}>
+          Browse content approved by your org. Click any item to preview, then add
+          it to your personal library to publish to players. Org content is read-only.
+        </div>
+      </div>
+
+      <div style={orgPageStyles.contextStrip}>
+        <div style={orgPageStyles.contextIcon}>
+          <Ic.building size={18} />
+        </div>
+        <div style={orgPageStyles.contextText}>
+          <div style={orgPageStyles.contextTitle}>Browsing {ORG.name}'s shared library</div>
+          <div style={orgPageStyles.contextSub}>
+            All content here is published by your organization and is read-only.
+          </div>
+        </div>
+        <div style={orgPageStyles.countPill}>
+          <Ic.check size={11} /> {total} approved item{total === 1 ? "" : "s"}
+        </div>
+      </div>
+
+      {videos.length > 0 && (
+        <div style={orgPageStyles.sectionGap}>
+          <Carousel
+            title="Videos"
+            items={videos}
+            addedIds={addedIds}
+            justChangedId={justChangedId}
+            onAdd={onAdd}
+            onPreview={onPreview}
+            CardComp={VideoCard}
+            onViewAll={() => onViewAll("video")}
+          />
+        </div>
+      )}
+
+      {schemes.length > 0 && (
+        <div style={orgPageStyles.sectionGap}>
+          <Carousel
+            title="Schemes & formations"
+            items={schemes}
+            addedIds={addedIds}
+            justChangedId={justChangedId}
+            onAdd={onAdd}
+            onPreview={onPreview}
+            CardComp={SchemeCard}
+            onViewAll={() => onViewAll("scheme")}
+          />
+        </div>
+      )}
+
+      {docs.length > 0 && (
+        <div>
+          <div style={orgPageStyles.docsHeader}>
+            <div style={orgPageStyles.docsLeft}>
+              Documents <span style={orgPageStyles.count}>{docs.length}</span>
+            </div>
+            <button style={carouselStyles.viewAll} onClick={() => onViewAll("doc")}>
+              View all
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {docs.slice(0, 8).map((item) => (
+              <ContentRow
+                key={item.id}
+                item={item}
+                mode="org-source"
+                isAdded={addedIds.includes(item.id)}
+                justChanged={item.id === justChangedId}
+                onAdd={onAdd}
+                onPreview={onPreview}
+              />
+            ))}
+            {docs.length > 8 && (
+              <button
+                className="btn-ghost-h"
+                style={{
+                  width: "100%", padding: "10px",
+                  border: "1px dashed var(--border)",
+                  borderRadius: "var(--r-md)",
+                  fontSize: 13, color: "var(--muted)",
+                  background: "transparent", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                }}
+                onClick={() => onViewAll("doc")}
+              >
+                View all {docs.length} documents
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {total === 0 && (
+        <div style={clStyles.empty}>
+          <div style={{ display: "grid", placeItems: "center", marginBottom: 12, color: "var(--border-hover)" }}>
+            <Ic.inbox size={36} />
+          </div>
+          <div style={clStyles.emptyTitle}>Your org hasn't published any content yet.</div>
+          <div style={{ fontSize: 13 }}>
+            When {ORG.name} approves drills or documents, they'll appear here.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===========================================================================
+// Page: Browse All — full filterable/searchable view for large libraries.
+// ===========================================================================
+
+const browseStyles = {
+  searchWrap: {
+    position: "relative",
+    flex: "1 1 240px",
+    minWidth: 200,
+  },
+  searchIcon: {
+    position: "absolute", left: 10, top: "50%",
+    transform: "translateY(-50%)",
+    color: "var(--muted)", pointerEvents: "none",
+    display: "flex",
+  },
+  searchInput: {
+    width: "100%",
+    paddingLeft: 32, paddingRight: 12, paddingTop: 8, paddingBottom: 8,
+    border: "1px solid var(--border)", borderRadius: "var(--r-md)",
+    fontSize: 13, fontFamily: "var(--font)",
+    background: "var(--card)", color: "var(--fg)",
+    transition: "border-color 120ms, box-shadow 120ms",
+  },
+  filterBar: {
+    display: "flex", alignItems: "center", gap: 10,
+    marginBottom: 14, flexWrap: "wrap",
+  },
+  chipRow: { display: "flex", gap: 6, flexWrap: "wrap" },
+  sortRow: { display: "flex", gap: 6, marginLeft: "auto" },
+  resultsLine: {
+    display: "flex", alignItems: "center", gap: 10,
+    marginBottom: 14, flexWrap: "wrap",
+  },
+  resultsCount: { fontSize: 12, color: "var(--muted)" },
+  tagChipRow: { display: "flex", gap: 6, flexWrap: "wrap" },
+};
+
+function TypeChip({ id, label, count, active, onClick }) {
+  return (
+    <button
+      className={`type-chip${active ? " active" : ""}`}
+      onClick={onClick}
+      style={{
+        padding: "6px 12px",
+        borderRadius: 999,
+        fontSize: 12, fontWeight: active ? 500 : 400,
+        border: `1px solid ${active ? "var(--brand-border)" : "var(--border)"}`,
+        background: active ? "var(--brand-bg)" : "var(--card)",
+        color: active ? "var(--brand-text)" : "var(--muted)",
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        display: "inline-flex", alignItems: "center", gap: 6,
+        transition: "background 120ms, border-color 120ms, color 120ms",
+      }}
+    >
+      {label}
+      <span style={{
+        fontSize: 10.5, fontWeight: 500, lineHeight: 1,
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        background: active ? "var(--brand-border)" : "var(--surface)",
+        color: active ? "white" : "var(--muted)",
+        borderRadius: 999, padding: "1px 5px", minWidth: 18,
+        transition: "background 120ms, color 120ms",
+      }}>
+        {count}
+      </span>
+    </button>
+  );
+}
+
+function SortBtn({ id, label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "6px 10px",
+        borderRadius: "var(--r-sm)",
+        fontSize: 12, fontWeight: active ? 500 : 400,
+        border: `1px solid ${active ? "var(--border-hover)" : "var(--border)"}`,
+        background: active ? "var(--surface)" : "transparent",
+        color: active ? "var(--fg)" : "var(--muted)",
+        cursor: "pointer",
+        transition: "background 120ms, color 120ms, border-color 120ms",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function TagChip({ tag, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "3px 9px",
+        borderRadius: 999, fontSize: 11, fontWeight: 500,
+        border: `1px solid ${active ? "var(--info-border)" : "var(--border)"}`,
+        background: active ? "var(--info-bg)" : "transparent",
+        color: active ? "var(--info-text)" : "var(--muted)",
+        cursor: "pointer",
+        transition: "background 100ms, color 100ms, border-color 100ms",
+      }}
+    >
+      {tag === "all" ? "All topics" : tag}
+    </button>
+  );
+}
+
+function BrowseAllPage({ videos, schemes, docs, addedIds, onBack, onAdd, onPreview, justChangedId, defaultType }) {
+  const [search, setSearch] = React.useState("");
+  const [typeFilter, setTypeFilter] = React.useState(defaultType || "all");
+  const [tagFilter, setTagFilter] = React.useState("all");
+  const [sort, setSort] = React.useState("recent");
+
+  const all = [...videos, ...schemes, ...docs];
+
+  const filtered = React.useMemo(() => {
+    let result = all.filter((item) => {
+      if (typeFilter !== "all" && item.kind !== typeFilter) return false;
+      if (tagFilter !== "all" && item.tag !== tagFilter) return false;
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        return (
+          item.name.toLowerCase().includes(q) ||
+          (item.description && item.description.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+    if (sort === "az") {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return result;
+  }, [all, typeFilter, tagFilter, search, sort]);
+
+  const counts = {
+    all: all.length,
+    video: videos.length,
+    scheme: schemes.length,
+    doc: docs.length,
+  };
+
+  const typeOptions = [
+    { id: "all", label: "All" },
+    { id: "video", label: "Videos" },
+    { id: "scheme", label: "Schemes" },
+    { id: "doc", label: "Documents" },
+  ];
+
+  return (
+    <div>
+      <button className="btn-ghost-h" style={olStyles.breadcrumb} onClick={onBack}>
+        <Ic.arrowLeft size={13} /> Org Library
+      </button>
+
+      <div style={{ ...clStyles.header, marginTop: 4, marginBottom: 20 }}>
+        <div>
+          <div style={clStyles.title}>Browse All</div>
+          <div style={clStyles.sub}>
+            {ORG.name}'s complete library — {all.length} approved items across videos, schemes, and documents.
+          </div>
+        </div>
+      </div>
+
+      {/* Search + type filter + sort */}
+      <div style={browseStyles.filterBar}>
+        <div style={browseStyles.searchWrap}>
+          <div style={browseStyles.searchIcon}>
+            <Ic.search size={14} />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by name or description…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="browse-search"
+            style={browseStyles.searchInput}
+          />
+        </div>
+
+        <div style={browseStyles.chipRow}>
+          {typeOptions.map(({ id, label }) => (
+            <TypeChip
+              key={id}
+              id={id}
+              label={label}
+              count={id === "all" ? counts.all : id === "video" ? counts.video : id === "scheme" ? counts.scheme : counts.doc}
+              active={typeFilter === id}
+              onClick={() => setTypeFilter(id)}
+            />
+          ))}
+        </div>
+
+        <div style={browseStyles.sortRow}>
+          <SortBtn id="recent" label="Recent" active={sort === "recent"} onClick={() => setSort("recent")} />
+          <SortBtn id="az" label="A–Z" active={sort === "az"} onClick={() => setSort("az")} />
+        </div>
+      </div>
+
+      {/* Results count + topic tags */}
+      <div style={browseStyles.resultsLine}>
+        <span style={browseStyles.resultsCount}>
+          {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+          {search.trim() ? ` for "${search.trim()}"` : ""}
+        </span>
+        <div style={browseStyles.tagChipRow}>
+          {["all", ...TAGS].map((tag) => (
+            <TagChip
+              key={tag}
+              tag={tag}
+              active={tagFilter === tag}
+              onClick={() => setTagFilter(tag)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Results list */}
+      {filtered.length === 0 ? (
+        <div style={clStyles.empty}>
+          <div style={{ display: "grid", placeItems: "center", marginBottom: 12, color: "var(--border-hover)" }}>
+            <Ic.inbox size={36} />
+          </div>
+          <div style={clStyles.emptyTitle}>No results</div>
+          <div style={{ fontSize: 13 }}>
+            Try a different search or clear the filters.
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {filtered.map((item) => (
+            <ContentRow
+              key={item.id}
+              item={item}
+              mode="org-source"
+              isAdded={addedIds.includes(item.id)}
+              justChanged={item.id === justChangedId}
+              onAdd={onAdd}
+              onPreview={onPreview}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===========================================================================
+// Root
+// ===========================================================================
+
+function App() {
+  const [route, setRoute] = React.useState("library");
+  const [addedIds, setAddedIds] = React.useState(PRE_ADDED_ORG_IDS);
+  const [justChangedId, setJustChangedId] = React.useState(null);
+  const [ownItems] = React.useState(COACH_OWN_ITEMS);
+  const [previewId, setPreviewId] = React.useState(null);
+  const [browseAllDefaultType, setBrowseAllDefaultType] = React.useState("all");
+
+  const addedOrgItems = ALL_ORG_CONTENT.filter((i) => addedIds.includes(i.id));
+  const previewItem = previewId ? findOrgItem(previewId) : null;
+
+  function flashChange(id) {
+    setJustChangedId(id);
+    setTimeout(() => setJustChangedId((cur) => (cur === id ? null : cur)), 900);
+  }
+  function handleAdd(id) {
+    if (!addedIds.includes(id)) {
+      setAddedIds([...addedIds, id]);
+      flashChange(id);
+    }
+  }
+  function handleRemove(id) {
+    setAddedIds(addedIds.filter((x) => x !== id));
+  }
+  function handlePreview(item) {
+    if (!item) return;
+    const isOrg = item.id.startsWith("org-") || item.id.startsWith("scheme-");
+    if (!isOrg) return;
+    setPreviewId(item.id);
+  }
+  function navigateBrowseAll(type) {
+    setBrowseAllDefaultType(type || "all");
+    setRoute("browse-all");
+  }
+
+  return (
+    <React.Fragment>
+      <Shell active={route} onNavigate={setRoute}>
+        {route === "library" && (
+          <ContentLibraryPage
+            ownItems={ownItems}
+            addedOrgItems={addedOrgItems}
+            onNavigateOrg={() => setRoute("org-library")}
+            justChangedId={justChangedId}
+            onRemove={handleRemove}
+            onPreview={handlePreview}
+          />
+        )}
+        {route === "org-library" && (
+          <OrgLibraryPage
+            videos={ORG_VIDEOS}
+            docs={ORG_DOCS}
+            schemes={ORG_SCHEMES}
+            addedIds={addedIds}
+            onBack={() => setRoute("library")}
+            onAdd={handleAdd}
+            onPreview={handlePreview}
+            justChangedId={justChangedId}
+            onViewAll={navigateBrowseAll}
+          />
+        )}
+        {route === "browse-all" && (
+          <BrowseAllPage
+            videos={ORG_VIDEOS}
+            docs={ORG_DOCS}
+            schemes={ORG_SCHEMES}
+            addedIds={addedIds}
+            onBack={() => setRoute("org-library")}
+            onAdd={handleAdd}
+            onPreview={handlePreview}
+            justChangedId={justChangedId}
+            defaultType={browseAllDefaultType}
+          />
+        )}
+      </Shell>
+
+      <PreviewPanel
+        item={previewItem}
+        isAdded={previewItem ? addedIds.includes(previewItem.id) : false}
+        onClose={() => setPreviewId(null)}
+        onAdd={(id) => { handleAdd(id); }}
+      />
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+</script>
+
+</body>
+</html>

@@ -165,6 +165,28 @@ const Ic = {
       <path d="M3 13h5l1 2h6l1-2h5" />
     </svg>
   ),
+  search: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.35-4.35" />
+    </svg>
+  ),
+  grid: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  ),
+  list: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />
+    </svg>
+  ),
 };
 
 window.Ic = Ic;
