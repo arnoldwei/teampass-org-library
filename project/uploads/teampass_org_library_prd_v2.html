@@ -1,0 +1,303 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #FAFAF9;
+    --fg: #272520;
+    --border: #E4E2DD;
+    --muted: #6E6A63;
+    --card-border: #E4E2DD;
+    --brand-bg: #DFFA99;
+    --brand-text: #52770D;
+    --brand-border: #6E9D10;
+    --success-bg: #D1FAE5;
+    --success-text: #096745;
+    --success-border: #A5F3CD;
+    --warning-bg: #FDF1CE;
+    --warning-text: #86580E;
+    --warning-border: #FBE298;
+    --error-bg: #FDF2F2;
+    --error-text: #AF2828;
+    --error-border: #F8C4C4;
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --shadow-sm: 0 1px 2px 0 #2725200F, 0 1px 1px 0 #2725200A;
+    --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  body { font-family: var(--font); color: var(--fg); background: transparent; }
+  .prd { max-width: 680px; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 18px; font-weight: 500; margin: 2rem 0 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; letter-spacing: -0.01em; }
+  h3 { font-size: 15px; font-weight: 500; margin: 1.25rem 0 0.5rem; }
+  p { font-size: 14px; line-height: 1.55; color: var(--muted); margin-bottom: 0.75rem; }
+  .tldr { background: #F2F1EE; border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 2rem; border: 1px solid var(--border); }
+  .tldr p { margin: 0; color: var(--fg); }
+  .meta { display: flex; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .meta-item { font-size: 13px; }
+  .meta-label { color: var(--muted); display: block; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .meta-value { color: var(--fg); font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 1rem; }
+  th { text-align: left; padding: 8px 10px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: top; line-height: 1.5; }
+  td:first-child { color: var(--fg); font-weight: 500; width: 36%; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: var(--radius-sm); }
+  .badge-must { background: var(--error-bg); color: var(--error-text); border: 1px solid var(--error-border); }
+  .badge-should { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+  .badge-nice { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+  .badge-desktop { background: #EFF5FF; color: #2241A3; border: 1px solid #BED3FC; }
+  .badge-mobile { background: #F3F0FF; color: #4A35A8; border: 1px solid #D4CAFF; }
+  .badge-both { background: var(--brand-bg); color: var(--brand-text); border: 1px solid var(--brand-border); }
+  .story { background: #F2F1EE; border-left: 2px solid var(--brand-border); padding: 10px 14px; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-bottom: 8px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .oq { background: #F2F1EE; border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 8px; font-size: 13px; color: var(--muted); border: 1px solid var(--border); }
+  .oq strong { color: var(--fg); }
+  .tip { background: #F2F1EE; border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 8px; font-size: 13px; color: var(--muted); line-height: 1.6; border: 1px solid var(--border); }
+  .tip-num { font-weight: 500; color: var(--fg); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .proto-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 2rem 0 0.75rem; }
+
+  .screen { background: #FFFFFF; border: 1px solid var(--card-border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
+  .screen-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .screen-title { font-size: 17px; font-weight: 500; color: var(--fg); letter-spacing: -0.01em; }
+  .screen-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .screen-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+  .btn-primary { background: #272520; color: #FFFFFF; border: 1px solid #10100E; border-radius: var(--radius-md); padding: 7px 14px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; font-family: var(--font); }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 7px 14px; font-size: 13px; cursor: pointer; white-space: nowrap; font-family: var(--font); }
+  .btn-ghost:hover { background: #F2F1EE; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 1rem 1.25rem; background: #F2F1EE; border-bottom: 1px solid var(--border); }
+  .stat-card { background: #FFFFFF; border-radius: var(--radius-md); padding: 10px 12px; border: 1px solid var(--border); }
+  .stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px; }
+  .stat-val { font-size: 20px; font-weight: 500; color: var(--fg); }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .alert { margin: 1rem 1.25rem; background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--radius-md); padding: 10px 14px; font-size: 13px; color: var(--warning-text); }
+
+  .tab-row { display: flex; padding: 0 1.25rem; border-bottom: 1px solid var(--border); }
+  .tab { font-size: 13px; padding: 10px 14px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: var(--font); }
+  .tab.active { color: var(--fg); font-weight: 500; border-bottom-color: var(--fg); }
+
+  .content-grid { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 8px; }
+  .section-note { font-size: 12px; color: var(--muted); padding: 8px 1.25rem 0; }
+
+  .row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #F2F1EE; border-radius: var(--radius-md); border: 1px solid var(--border); }
+  .row:hover { border-color: #D1CEC7; }
+  .icon-wrap { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .icon-video { background: #EFF5FF; color: #2241A3; }
+  .icon-doc { background: #ECFDF5; color: #096745; }
+  .row-info { flex: 1; min-width: 0; }
+  .row-name { font-size: 13px; font-weight: 500; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .row-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .org-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 500; background: var(--brand-bg); color: var(--brand-text); border: 1px solid var(--brand-border); border-radius: var(--radius-sm); padding: 1px 6px; white-space: nowrap; flex-shrink: 0; }
+
+  .row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .ellipsis { width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; color: var(--muted); letter-spacing: 1px; }
+  .action-add { font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: #FFFFFF; cursor: pointer; color: var(--fg); white-space: nowrap; font-family: var(--font); box-shadow: var(--shadow-sm); }
+  .action-added { font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid var(--success-border); background: var(--success-bg); cursor: pointer; color: var(--success-text); white-space: nowrap; font-family: var(--font); display: flex; align-items: center; gap: 4px; }
+  .action-remove { font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid var(--error-border); background: var(--error-bg); cursor: pointer; color: var(--error-text); white-space: nowrap; font-family: var(--font); }
+
+  .breadcrumb { font-size: 12px; color: var(--muted); margin-bottom: 4px; cursor: pointer; }
+  .breadcrumb:hover { color: var(--fg); }
+
+  .ds-block { background: #F2F1EE; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .ds-block pre { font-size: 12px; color: var(--fg); font-family: "JetBrains Mono", "SF Mono", Menlo, monospace; line-height: 1.6; white-space: pre-wrap; margin: 0; }
+</style>
+
+<div class="prd">
+
+  <h1>PRD — Org Library for Teampass</h1>
+  <p style="color: var(--muted); font-size: 13px; margin-bottom: 1rem;">Feature: Org Content Library · Surface: Desktop dashboard · Status: Draft v2</p>
+
+  <div class="tldr">
+    <p>Coaches currently have no way to access org-approved content without it being manually sent to them. This feature adds a passive, browsable Org Library — accessible from the existing Content Library page via a low-hierarchy secondary button — where coaches can discover org-approved drills, videos, and documents and selectively pull items into their own team library. Org content is always read-only; coaches own nothing from the org library until they explicitly add it. The mental model is a reference shelf, not a shared folder.</p>
+  </div>
+
+  <div class="meta">
+    <div class="meta-item"><span class="meta-label">Personas</span><span class="meta-value">Coach, Org Admin</span></div>
+    <div class="meta-item"><span class="meta-label">Surface</span><span class="meta-value">Desktop dashboard</span></div>
+    <div class="meta-item"><span class="meta-label">Dependencies</span><span class="meta-value">Content Library, Org/Coach role system</span></div>
+    <div class="meta-item"><span class="meta-label">Stage</span><span class="meta-value">Seed · MVP scoped</span></div>
+  </div>
+
+  <h2>User stories</h2>
+  <div class="story">As a coach, I want to browse content that my org has approved, so I can find relevant drills and documents without searching YouTube or asking the org admin directly.</div>
+  <div class="story">As a coach, I want to add org content to my personal library in one click, so it appears alongside my own content when I publish to players.</div>
+  <div class="story">As a coach, I want to clearly understand which content belongs to my org vs. my own team, so I always know what I can and cannot edit.</div>
+  <div class="story">As an org admin, I want to publish approved content to a shared org library, so all coaches in my org have access to canonical program materials.</div>
+
+  <h2>Requirements</h2>
+  <table>
+    <tr><th style="width:36%">Requirement</th><th style="width:12%">Priority</th><th style="width:12%">Surface</th><th>Notes</th></tr>
+    <tr><td>A "Browse Org Library" ghost button appears in the top-right of the Content Library page, visually secondary to "+ Upload New"</td><td><span class="badge badge-must">Must</span></td><td><span class="badge badge-desktop">Desktop</span></td><td>No fill, muted border — never a tab or toggle. The personal library is always the default view.</td></tr>
+    <tr><td>Clicking "Browse Org Library" navigates to a full-page org library view with a breadcrumb back to the personal library</td><td><span class="badge badge-must">Must</span></td><td><span class="badge badge-desktop">Desktop</span></td><td>Full page, not a modal. Breadcrumb reads "← Content Library".</td></tr>
+    <tr><td>Every org content item displays an org badge (building icon + org name) using brand tokens: bg #DFFA99, text #52770D, border #6E9D10</td><td><span class="badge badge-must">Must</span></td><td><span class="badge badge-both">Both</span></td><td>Badge is visible on the content row at all times — not just on hover or in menus.</td></tr>
+    <tr><td>Hovering a content row in the org library reveals an "Add to my library" button; the ellipsis is hidden during hover</td><td><span class="badge badge-must">Must</span></td><td><span class="badge badge-desktop">Desktop</span></td><td>No ellipsis menu for org content — the only affordances are add or already-added.</td></tr>
+    <tr><td>Already-added items show a confirmed "Added" state using success tokens: bg #D1FAE5, text #096745, border #A5F3CD</td><td><span class="badge badge-must">Must</span></td><td><span class="badge badge-desktop">Desktop</span></td><td>State persists across sessions. Clicking "Added" does nothing — it is a status, not a toggle.</td></tr>
+    <tr><td>Org content is strictly read-only — no edit, rename, or delete affordances at any point</td><td><span class="badge badge-must">Must</span></td><td><span class="badge badge-both">Both</span></td><td>Enforced at UI and API layer.</td></tr>
+    <tr><td>In the coach's personal library, org-sourced items display the same org badge so provenance is always clear</td><td><span class="badge badge-must">Must</span></td><td><span class="badge badge-desktop">Desktop</span></td><td>Hover action in personal library: "Remove from my library" using error tokens: bg #FDF2F2, text #AF2828, border #F8C4C4.</td></tr>
+    <tr><td>Org admins (and approved coaches) can publish content to the org library from the admin dashboard</td><td><span class="badge badge-must">Must</span></td><td><span class="badge badge-desktop">Desktop</span></td><td>Admin publish flow is a dependency — requires its own spec.</td></tr>
+    <tr><td>Org library supports filtering by content type (All / Videos / Documents) using existing tab pattern</td><td><span class="badge badge-should">Should</span></td><td><span class="badge badge-desktop">Desktop</span></td><td>Matches existing Content Library tab UI.</td></tr>
+    <tr><td>Org library header shows item count: e.g. "14 items approved by your org"</td><td><span class="badge badge-should">Should</span></td><td><span class="badge badge-desktop">Desktop</span></td><td>Sets expectations before browsing. Shown in subtitle under page title.</td></tr>
+    <tr><td>Empty state when no org content has been published yet</td><td><span class="badge badge-should">Should</span></td><td><span class="badge badge-desktop">Desktop</span></td><td>"Your org hasn't published any content yet." — no dead end.</td></tr>
+    <tr><td>Org library content only reaches the mobile player app after a coach adds it to their personal library and explicitly publishes it</td><td><span class="badge badge-must">Must</span></td><td><span class="badge badge-mobile">Mobile</span></td><td>Org library is a coach-facing desktop concept — not surfaced directly to players.</td></tr>
+  </table>
+
+  <h2>Success metrics</h2>
+  <table>
+    <tr><th>Metric</th><th>Target</th><th>Notes</th></tr>
+    <tr><td>Org library discovery rate</td><td>≥60% of coaches visit within 30 days of org publishing first item</td><td>Validates findability of the secondary entry point</td></tr>
+    <tr><td>Add-to-library conversion</td><td>≥40% of coaches who visit add at least one item</td><td>Validates utility of the browse model</td></tr>
+    <tr><td>Content confusion support tickets</td><td>Zero tickets about "can't tell if content is mine or org's" within 60 days of launch</td><td>Validates org badge as sufficient provenance signal</td></tr>
+  </table>
+
+  <h2>Open questions</h2>
+  <div class="oq"><strong>Content updates:</strong> If the org edits or removes content after a coach has added it, does the coach's copy freeze or stay linked? Not blocking for MVP but needs a decision before launch.</div>
+  <div class="oq"><strong>Admin publish flow:</strong> How does an org admin designate content as org-level vs. team-level? This PRD assumes that flow exists — it needs its own spec.</div>
+  <div class="oq"><strong>Search:</strong> Should the org library be searchable? Deferred for now but becomes necessary past ~20 items.</div>
+  <div class="oq"><strong>Notifications:</strong> Should coaches be alerted when new org content is added? Intentionally deferred — tackle post-MVP.</div>
+
+  <hr>
+  <h2>Prototype — key screens</h2>
+
+  <div class="proto-label">Screen 1 — Content Library (default, coach view)</div>
+  <div class="screen">
+    <div class="screen-header">
+      <div>
+        <div class="screen-title">Content Library</div>
+        <div class="screen-sub">Your central hub for managing, editing, and publishing team content.</div>
+      </div>
+      <div class="screen-actions">
+        <button class="btn-ghost">Browse Org Library</button>
+        <button class="btn-primary">+ Upload New</button>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-lbl">Total documents</div><div class="stat-val">0</div><div class="stat-sub">0 views</div></div>
+      <div class="stat-card"><div class="stat-lbl">Drill videos</div><div class="stat-val">0</div><div class="stat-sub">0 views</div></div>
+      <div class="stat-card"><div class="stat-lbl">Published</div><div class="stat-val">0</div></div>
+      <div class="stat-card"><div class="stat-lbl">Unpublished</div><div class="stat-val">7</div></div>
+    </div>
+    <div class="alert">7 unpublished items — review and publish to make them visible to your team.</div>
+    <div class="tab-row">
+      <div class="tab active">All Documents</div>
+      <div class="tab">All Videos</div>
+    </div>
+    <div class="content-grid">
+      <div class="row">
+        <div class="icon-wrap icon-video">▶</div>
+        <div class="row-info">
+          <div class="row-name">Dodge and throw drill — advanced</div>
+          <div class="row-meta">Video · Unpublished · Added Apr 28</div>
+        </div>
+        <div class="row-actions">
+          <div class="ellipsis">···</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="icon-wrap icon-doc">▤</div>
+        <div class="row-info">
+          <div class="row-name">Volley defensive scheme 2025 <span class="org-badge">⊞ Boca</span></div>
+          <div class="row-meta">Document · Added from org · Published</div>
+        </div>
+        <div class="row-actions">
+          <button class="action-remove">Remove from my library</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="proto-label">Screen 2 — Org Library browse view</div>
+  <div class="screen">
+    <div class="screen-header">
+      <div>
+        <div class="breadcrumb">← Content Library</div>
+        <div class="screen-title">Org Library — Boca</div>
+        <div class="screen-sub">14 items approved by your org. Add any to your personal library to publish to players.</div>
+      </div>
+    </div>
+    <div class="tab-row">
+      <div class="tab active">All</div>
+      <div class="tab">Videos</div>
+      <div class="tab">Documents</div>
+    </div>
+    <div class="section-note">Hover a row to add it to your library.</div>
+    <div class="content-grid">
+      <div class="row">
+        <div class="icon-wrap icon-video">▶</div>
+        <div class="row-info">
+          <div class="row-name">Ground ball fundamentals <span class="org-badge">⊞ Boca</span></div>
+          <div class="row-meta">Video · 0:28 · Added to org Feb 2025</div>
+        </div>
+        <div class="row-actions">
+          <button class="action-add">+ Add to my library</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="icon-wrap icon-video">▶</div>
+        <div class="row-info">
+          <div class="row-name">Give-and-go — attack movement <span class="org-badge">⊞ Boca</span></div>
+          <div class="row-meta">Video · 0:24 · Added to org Feb 2025</div>
+        </div>
+        <div class="row-actions">
+          <button class="action-added">✓ Added</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="icon-wrap icon-doc">▤</div>
+        <div class="row-info">
+          <div class="row-name">Boca defensive scheme 2025 <span class="org-badge">⊞ Boca</span></div>
+          <div class="row-meta">Document · Added to org Jan 2025</div>
+        </div>
+        <div class="row-actions">
+          <button class="action-add">+ Add to my library</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+  <h2>Design system tokens — paste this into Claude Design</h2>
+  <p>Include this block at the top of your Claude Design prompt before anything else.</p>
+  <div class="ds-block">
+    <pre>Design system tokens (use these exact values, no deviations):
+
+Font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+Weights: 400 regular · 500 medium only (never 600 or 700)
+Letter spacing: headings -0.01em · eyebrow labels 0.06em
+
+Background page: #FAFAF9
+Background surface/card: #F2F1EE
+Foreground (primary text): #272520
+Foreground (muted text): #6E6A63
+Border default: #E4E2DD
+Border hover: #D1CEC7
+Card background: #FFFFFF
+Input border: #D1CEC7
+
+Primary button: bg #272520 · text #FFFFFF · border #10100E
+Ghost button: bg transparent · text #6E6A63 · border #E4E2DD
+Ghost button hover: bg #F2F1EE
+
+Org badge (brand): bg #DFFA99 · text #52770D · border #6E9D10
+Added/success state: bg #D1FAE5 · text #096745 · border #A5F3CD
+Remove/error state: bg #FDF2F2 · text #AF2828 · border #F8C4C4
+Warning banner: bg #FDF1CE · text #86580E · border #FBE298
+
+Radius: xs=4px · sm=6px · md=8px · lg=12px · xl=16px
+Spacing unit: 4px (common values: 8, 12, 16, 20, 24px)
+Shadow sm: 0 1px 2px 0 #2725200F, 0 1px 1px 0 #2725200A</pre>
+  </div>
+
+  <h2>Notes for Claude Design</h2>
+  <div class="tip"><span class="tip-num">Feed the PRD before the screenshots.</span> Paste this full document first so Claude Design has the mental model before it sees any visuals. Leading with screenshots causes it to pattern-match to the visual and ignore intent.</div>
+  <div class="tip"><span class="tip-num">Ask for one screen at a time.</span> Start with the Org Library browse view. React, then ask for hover states, then the personal library with the org badge. Asking for the full flow in one shot collapses detail.</div>
+  <div class="tip"><span class="tip-num">Be explicit about interactions.</span> "On hover, hide the ellipsis button and show the Add to my library button" is far more useful than "make it interactive." Name the state change precisely.</div>
+  <div class="tip"><span class="tip-num">Tell it what not to build.</span> Explicitly say: no notifications, no edit capability on org content, no modal — the org library is a full-page view with a breadcrumb back.</div>
+  <div class="tip"><span class="tip-num">Anchor to the token block above.</span> Say "use only the token values in the design system block at the top of this document" — this prevents it from drifting to its own color guesses.</div>
+  <div class="tip"><span class="tip-num">Best screenshots to include.</span> Content Library page (tab pattern and layout), Upload Content page (button hierarchy and spacing), Manage Roster page (row hover and action column patterns).</div>
+
+</div>
